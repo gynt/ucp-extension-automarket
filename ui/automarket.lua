@@ -153,7 +153,7 @@ local sliderStep = 8
 local sliderBuyValue_actionHandler = function(param_1, event, pMinValue, pMaxValue, pCurrentValue)
   -- log(WARNING, "slider action callback")
   if event == 1 then
-    -- initialize
+    -- initialize (e.g. prepare for render)
     log(WARNING, string.format("%d, %d, %d, %d, %d", param_1, event, pMinValue[0], pMaxValue[0], pCurrentValue[0]))
     pMinValue[0] = sliderMin
     pMaxValue[0] = sliderMax
@@ -198,6 +198,10 @@ end
 local pSliderBuyValue_actionHandler = ffi.cast("void (__cdecl *)(int, int, int*, int*, int*)", sliderBuyValue_actionHandler)
 
 local sliderBuyValue_render = function(param_1, thumbXPos, sliderValue, thumbWidth, isDragged)
+  ---@type ButtonRenderState
+  local state = game.Rendering.ButtonState
+  -- Well this has be to set to 0 in order for no artifacts to appear
+  state.interacting = 0
   game.Rendering.renderButtonBackground(game.Rendering.alphaAndButtonSurface, -1, -1)
   -- log(WARNING, "slider render callback")
   local color = game.Rendering.Colors.pGreyishYellow[0]
@@ -205,10 +209,11 @@ local sliderBuyValue_render = function(param_1, thumbXPos, sliderValue, thumbWid
     color = game.Rendering.Colors.pColorDarkLime[0]
   end
 
-  ---@type ButtonRenderState
-  local state = game.Rendering.ButtonState
+  
   game.Rendering.drawColorBox(game.Rendering.pencilRenderCore, thumbXPos + state.x + 1, state.y + 2, thumbXPos + state.x - 2 + thumbWidth, state.height - 4 + state.y, color)
   game.Rendering.renderNumberToScreen2(game.Rendering.textManager, sliderValue, state.width + 0x14 + state.x, state.y  + 6, 0, 0xCCFAFF, 0x12, 0, 0)
+
+  game.Rendering.renderTextToScreenConst(game.Rendering.textManager, "Buy when less than: ", state.x - 100, state.y + 6, 0, 0xCCFAFF, 0x12, 0x0, 0x0)
 end
 local pSliderBuyValue_render = ffi.cast("void (__cdecl *)(int, int, int, int, bool)", sliderBuyValue_render)
 
@@ -604,6 +609,28 @@ local menuItems = {
       parameter = 29,
     },
   },
+  -- Sleep button
+  {
+    menuItemType = 0x02000003, -- Button in interaction group (bit flags)
+    menuItemRenderFunctionType = 0x3,
+    firstItemTypeData = {
+      gmDataIndex = 0xCD,
+    },
+    position = {
+      position = {
+        x = 600 - 45 - 35 - 50,
+        y = 15,
+      }
+    },
+    itemWidth = 50,
+    itemHeight = 50,
+    callbackParameter = {
+      parameter = 26,
+    },
+    menuItemRenderFunction = {
+      gmDataImage = game.Rendering.generalButtonRender,
+    }
+  },
 
   -- Slider: Buy value
   {
@@ -615,11 +642,11 @@ local menuItems = {
     position = {
       position = {
         x = 21 + 100,
-        y = 408 - 10 - 30,
+        y = 408 - 10 - 20 - 10,
       }
     },
     itemWidth = 256,
-    itemHeight = 30,
+    itemHeight = 30, -- seems to be the minimum size...
     callbackParameter = {
       parameter = 30,
     },
@@ -630,7 +657,7 @@ local menuItems = {
       slider = pSliderBuyValue_actionHandler,
     },
     menuItemRenderFunction = {
-      slider = pSliderBuyValue_render,
+      slider = pSliderBuyValue_render, -- ffi.cast("void (__cdecl *)(int, int, int, int, bool)", core.AOBScan("56 33 F6 39 ? ? ? ? ? 89 ? ? ? ? ? 7E 2B"))
     },
   },
 
