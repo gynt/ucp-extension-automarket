@@ -29,7 +29,9 @@ log(WARNING, AUTOMARKET_TITLE, pAutomarketTitle)
 
 ffi.cdef([[
   typedef struct AutoMarketPlayerData {
-    bool enabled[25];
+    bool enabled;
+    bool buyEnabled[25];
+    bool sellEnabled[25];
     int buyValues[25];
     int sellValues[25];
   } AutoMarketPlayerData;
@@ -46,8 +48,8 @@ local value1 = 0
 local actionCallback1 = function(param)
   log(WARNING, param)
   if param < 25 then
-    local v1SwitchNew = not autoMarketPlayerDataStructs[0].enabled[param]
-    autoMarketPlayerDataStructs[0].enabled[param] = v1SwitchNew
+    local v1SwitchNew = not autoMarketPlayerDataStructs[0].buyEnabled[param]
+    autoMarketPlayerDataStructs[0].buyEnabled[param] = v1SwitchNew
     pLastSelectedGood = param
   end
   if param == 26 then
@@ -93,8 +95,9 @@ local renderCallback1 = function(param)
       gmID = (param * 2) + 0x26a - 2
       pCurrentlyHoveredGood[0] = param
     end
+    -- game.Rendering.renderButtonBackground(game.Rendering.alphaAndButtonSurface, 0, -1)
     game.Rendering.renderGM(textureRenderCore, 46, gmID, state.x + 0, state.y + 0)
-    if not autoMarketPlayerDataStructs[0].enabled[param] then
+    if not autoMarketPlayerDataStructs[0].buyEnabled[param] then
       -- Forbidden icon
       -- game.Rendering.renderGMWithBlending(textureRenderCore, 46, 0x2D, state.x - 0, state.y - 0, 16)
       local stubTxt = ffi.cast("char *", "-")
@@ -138,10 +141,7 @@ local renderCallback1 = function(param)
     game.Rendering.renderGM(textureRenderCore, 156, i, state.x, state.y)
   end
 
-  if pCurrentlyHoveredGood[0] ~= 0 then
-    local gmID = (pCurrentlyHoveredGood[0] * 2) + 0x269 - 2
-    game.Rendering.renderGM(textureRenderCore, 46, gmID, 21, 408 - 65)
-  end
+
 
 end
 
@@ -151,6 +151,8 @@ local sliderMax = 256
 local sliderStep = 8
 
 local sliderBuyValue_actionHandler = function(param_1, event, pMinValue, pMaxValue, pCurrentValue)
+  ---@type ButtonRenderState
+  local state = game.Rendering.ButtonState
   -- log(WARNING, "slider action callback")
   if event == 1 then
     -- initialize (e.g. prepare for render)
@@ -165,21 +167,33 @@ local sliderBuyValue_actionHandler = function(param_1, event, pMinValue, pMaxVal
     -- log(WARNING, string.format("new value is: %s", pCurrentValue[0]))
     sliderTempValue = pCurrentValue[0]
   elseif event == 4 then
-    -- Some kind of "pre", called on almost every render...
+    -- Some kind of "pre", called on almost every render... (I mean callback)
     -- log(WARNING, string.format("%d, %d, %d, %d, %d", param_1, event, pMinValue[0], pMaxValue[0], pCurrentStep[0]))
     pMinValue[0] = sliderMin
     pMaxValue[0] = sliderMax
     pCurrentValue[0] = sliderTempValue
+    state.interacting = 1 -- TODO:FIXME: hack?
   elseif event == 5 then
     -- scroll up
     log(WARNING, string.format("%d, %d, %d, %d, %d", param_1, event, pMinValue[0], pMaxValue[0], pCurrentValue[0]))
-    pCurrentValue[0] = pCurrentValue[0] - 1
-    sliderTempValue = sliderTempValue - 1
+    log(WARNING, string.format("interacting: %s", state.interacting))
+    -- TODO: strangely enough x and y is not properly set when scrolling on top of a scrollbar. It works for buttons and other menu places... Stumps me!
+    -- Perhaps the state is not set as valid or something...
+    log(WARNING, string.format("x, y, width, height: %s, %s, %s, %s", state.x, state.y, state.width, state.height))
+    log(WARNING, string.format("mouse: %s", game.Input.isMouseInsideBox(game.Input.mouseState, state.x, state.y, state.width, state.height)))
+    if state.interacting ~= 0 then
+      pCurrentValue[0] = pCurrentValue[0] - 1
+      sliderTempValue = sliderTempValue - 1
+    end
+    
   elseif event == 6 then
     -- scroll down
     log(WARNING, string.format("%d, %d, %d, %d, %d", param_1, event, pMinValue[0], pMaxValue[0], pCurrentValue[0]))
-    pCurrentValue[0] = pCurrentValue[0] + 1
-    sliderTempValue = sliderTempValue + 1
+
+    if state.interacting ~= 0 then
+      pCurrentValue[0] = pCurrentValue[0] + 1
+      sliderTempValue = sliderTempValue + 1
+    end
   elseif event == 7 then
     -- announce step size
     log(WARNING, string.format("%d, %d, %d, %d, %d", param_1, event, pMinValue[0], pMaxValue[0], pCurrentValue[0]))
@@ -211,11 +225,20 @@ local sliderBuyValue_render = function(param_1, thumbXPos, sliderValue, thumbWid
 
   
   game.Rendering.drawColorBox(game.Rendering.pencilRenderCore, thumbXPos + state.x + 1, state.y + 2, thumbXPos + state.x - 2 + thumbWidth, state.height - 4 + state.y, color)
-  game.Rendering.renderNumberToScreen2(game.Rendering.textManager, sliderValue, state.width + 0x14 + state.x, state.y  + 6, 0, 0xCCFAFF, 0x12, 0, 0)
 
-  game.Rendering.renderTextToScreenConst(game.Rendering.textManager, "Buy when less than: ", state.x - 100, state.y + 6, 0, 0xCCFAFF, 0x12, 0x0, 0x0)
+  game.Rendering.renderTextToScreenConst(game.Rendering.textManager, string.format("Buy below"), state.x - 75, state.y + 6, 1, 0xCCFAFF, 0x12, 0x0, 0x0)
+
+  game.Rendering.renderNumberToScreen2(game.Rendering.textManager, sliderValue,state.x - 18, state.y + 6, 1, 0xCCFAFF, 0x12, 0, 0)
 end
 local pSliderBuyValue_render = ffi.cast("void (__cdecl *)(int, int, int, int, bool)", sliderBuyValue_render)
+
+local clearSellValue = function(parameter)
+  if parameter == 1 then
+    sliderTempValue = 0
+  end
+end
+
+local pClearSellValue = ffi.cast("void (__cdecl *)(int)", clearSellValue)
 
 local menuItems = {
   {
@@ -609,27 +632,104 @@ local menuItems = {
       parameter = 29,
     },
   },
-  -- Sleep button
   {
     menuItemType = 0x02000003, -- Button in interaction group (bit flags)
-    menuItemRenderFunctionType = 0x3,
-    firstItemTypeData = {
-      gmDataIndex = 0xCD,
-    },
+    menuItemRenderFunctionType = 0x1,
     position = {
       position = {
-        x = 600 - 45 - 35 - 50,
+        x = 600 - 10 - 35 - 35 - 155,
         y = 15,
+      }
+    },
+    itemWidth = 150,
+    itemHeight = 30,
+    callbackParameter = {
+      parameter = 26,
+    },
+    menuItemRenderFunction = {
+      simple = ffi.cast("void (__cdecl *)(int)", function(parameter)
+        ---@type ButtonRenderState
+        local state = game.Rendering.ButtonState
+        state.interacting = autoMarketPlayerDataStructs[0].enabled
+        game.Rendering.renderButtonBackground(game.Rendering.alphaAndButtonSurface, 0, -1)
+
+        local txt = "Auto Market: Off"
+        if autoMarketPlayerDataStructs[0].enabled then
+          txt = "Auto Market: On"
+        end
+        game.Rendering.renderTextToScreenConst(game.Rendering.textManager, txt, state.x + 6, state.y + 6, 0, 0xB8EEFB, 0x12, 0, 0)
+      end),
+    },
+    menuItemActionHandler = {
+      simple = ffi.cast("void (__cdecl *)(int)", function(parameter)
+        autoMarketPlayerDataStructs[0].enabled = not autoMarketPlayerDataStructs[0].enabled
+      end),
+    }
+  },
+  -- Sleep button
+  -- {
+  --   menuItemType = 0x02000003, -- Button in interaction group (bit flags)
+  --   menuItemRenderFunctionType = 0x3,
+  --   firstItemTypeData = {
+  --     gmDataIndex = 0xCD,
+  --   },
+  --   position = {
+  --     position = {
+  --       x = 600 - 45 - 35 - 50,
+  --       y = 15,
+  --     }
+  --   },
+  --   itemWidth = 50,
+  --   itemHeight = 50,
+  --   callbackParameter = {
+  --     parameter = 26,
+  --   },
+  --   menuItemRenderFunction = {
+  --     gmDataImage = game.Rendering.generalButtonRender,
+  --   }
+  -- },
+
+
+  -- Slider: goods image
+  {
+    menuItemType = 0x01000000, 
+  },
+  {
+    menuItemType = 0x02000003, -- Button in interaction group (bit flags)
+    menuItemRenderFunctionType = 0x1,
+    position = {
+      position = {
+        x = 600 - 256 - 50 - 50 - 100 - 100,
+        y = 408 - 10 - 20 - 10 - 30 - 5,
       }
     },
     itemWidth = 50,
     itemHeight = 50,
     callbackParameter = {
-      parameter = 26,
+      parameter = 1,
     },
     menuItemRenderFunction = {
-      gmDataImage = game.Rendering.generalButtonRender,
-    }
+      simple = ffi.cast("void (__cdecl *)(int)", function(parameter)
+        ---@type ButtonRenderState
+        local state = game.Rendering.ButtonState
+        state.interacting = 0
+        -- For some reason this image has the wrong dimensions...
+        -- game.Rendering.renderButtonBackground(game.Rendering.alphaAndButtonSurface, 0, -1)
+
+        if pCurrentlyHoveredGood[0] ~= 0 then
+          local gmID = (pCurrentlyHoveredGood[0] * 2) + 0x269 - 2
+          game.Rendering.renderGM(textureRenderCore, 46, gmID, state.x, state.y)
+        end
+
+        local txt = "0" -- TODO: current resource count
+        game.Rendering.renderTextToScreenConst(game.Rendering.textManager, txt, state.x + (state.width / 2), state.y + state.height, 1, 0xB8EEFB, 0x12, 0, 0)
+      end),
+    },
+    menuItemActionHandler = {
+      simple = ffi.cast("void (__cdecl *)(int)", function(parameter)
+        log(WARNING, "yay!")
+      end),
+    },
   },
 
   -- Slider: Buy value
@@ -641,23 +741,101 @@ local menuItems = {
     menuItemRenderFunctionType = 0x4, -- Slider
     position = {
       position = {
-        x = 21 + 100,
-        y = 408 - 10 - 20 - 10,
+        x = 600 - 256 - 50 - 50,
+        y = 408 - 10 - 20 - 10 - 30 - 5,
       }
     },
-    itemWidth = 256,
+    itemWidth = sliderMax,
     itemHeight = 30, -- seems to be the minimum size...
     callbackParameter = {
       parameter = 30,
     },
     firstItemTypeData = {
-      itemsToSkip = 8, -- scroll bar how many steps to jump per click
+      itemsToSkip = sliderStep, -- scroll bar how many steps to jump per click
     },
     menuItemActionHandler = {
       slider = pSliderBuyValue_actionHandler,
     },
     menuItemRenderFunction = {
       slider = pSliderBuyValue_render, -- ffi.cast("void (__cdecl *)(int, int, int, int, bool)", core.AOBScan("56 33 F6 39 ? ? ? ? ? 89 ? ? ? ? ? 7E 2B"))
+    },
+  },
+  -- {
+  --   menuItemType = 0x02000003, -- Button in interaction group (bit flags)
+  --   menuItemRenderFunctionType = 0x3,
+  --   firstItemTypeData = {
+  --     gmDataIndex = 0x023A,
+  --   },
+  --   position = {
+  --     position = {
+  --       x = 600 - 50 - 10,
+  --       y = 408 - 10 - 20 - 10 - 30 - 5,
+  --     }
+  --   },
+  --   itemWidth = 30,
+  --   itemHeight = 30,
+  --   callbackParameter = {
+  --     parameter = 0,
+  --   },
+  -- },
+
+  -- Slider: sell value
+  {
+    menuItemType = 0x01000000,
+  },
+  {
+    menuItemType = 5, -- Slider
+    menuItemRenderFunctionType = 0x4, -- Slider
+    position = {
+      position = {
+        x = 600 - 256 - 50 - 50,
+        y = 408 - 10 - 20 - 10,
+      }
+    },
+    itemWidth = sliderMax,
+    itemHeight = 30, -- seems to be the minimum size...
+    callbackParameter = {
+      parameter = 0,
+    },
+    firstItemTypeData = {
+      itemsToSkip = sliderStep, -- scroll bar how many steps to jump per click
+    },
+    menuItemActionHandler = {
+      slider = pSliderBuyValue_actionHandler,
+    },
+    menuItemRenderFunction = {
+      slider = pSliderBuyValue_render, -- ffi.cast("void (__cdecl *)(int, int, int, int, bool)", core.AOBScan("56 33 F6 39 ? ? ? ? ? 89 ? ? ? ? ? 7E 2B"))
+    },
+  },
+  {
+    menuItemType = 0x02000003, -- Button in interaction group (bit flags)
+    menuItemRenderFunctionType = 0x1,
+    position = {
+      position = {
+        x = 600 - 45,
+        y = 408 - 10 - 20 - 10,
+      }
+    },
+    itemWidth = 30,
+    itemHeight = 30,
+    callbackParameter = {
+      parameter = 1,
+    },
+    menuItemRenderFunction = {
+      simple = ffi.cast("void (__cdecl *)(int)", function(parameter)
+        ---@type ButtonRenderState
+        local state = game.Rendering.ButtonState
+        game.Rendering.renderButtonBackground(game.Rendering.alphaAndButtonSurface, 0, -1)
+
+        local txt = "Off"
+        if state.interacting ~= 0 then
+          txt = "On"
+        end
+        game.Rendering.renderTextToScreenConst(game.Rendering.textManager, txt, state.x + (state.width / 2), state.y + (state.height / 2), 3, 0xB8EEFB, 0x12, 0, 0)
+      end),
+    },
+    menuItemActionHandler = {
+      simple = pClearSellValue,
     },
   },
 
