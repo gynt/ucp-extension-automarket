@@ -57,6 +57,109 @@ local actionCallback1 = function(param)
   end
 end
 
+local GOODS_DISPLAY_ORDER = {
+  2,
+  3,
+  4,
+  6,
+  8,
+  9,
+  24,
+
+  16,
+  10,
+  11,
+  12,
+  13,
+  14,
+  23,
+
+  17,
+  18,
+  19,
+  20,
+  21,
+  22,
+}
+
+local GOODS_OFFSETS = ffi.new("IntegerPoint[25]", {})
+GOODS_OFFSETS[2] = {
+  x = 0,
+  y = 4,
+}
+GOODS_OFFSETS[3] = {
+  x = 4,
+  y = 6,
+}
+GOODS_OFFSETS[4] = {
+  x = 2,
+  y = 4,
+}
+GOODS_OFFSETS[4] = {
+  x = 0,
+  y = 2,
+}
+GOODS_OFFSETS[8] = {
+  x = 6,
+  y = 0,
+}
+GOODS_OFFSETS[9] = {
+  x = 12,
+  y = 0,
+}
+GOODS_OFFSETS[24] = {
+  x = 2,
+  y = 2,
+}
+
+GOODS_OFFSETS[10] = {
+  x = 0,
+  y = 6,
+}
+GOODS_OFFSETS[11] = {
+  x = 2,
+  y = 6,
+}
+GOODS_OFFSETS[12] = {
+  x = 2,
+  y = 6,
+}
+GOODS_OFFSETS[13] = {
+  x = 0,
+  y = 6,
+}
+GOODS_OFFSETS[14] = {
+  x = 6,
+  y = 4,
+}
+GOODS_OFFSETS[16] = {
+  x = 3,
+  y = 2,
+}
+GOODS_OFFSETS[23] = {
+  x = 8,
+  y = 0,
+}
+
+GOODS_OFFSETS[17] = {
+  x = 0,
+  y = 2,
+}
+
+
+local GOODS_TEXT_SIZE = 30
+local GOODS_BUTTON_BASE_SIZE = 40
+local GOODS_START_X = 15 + 2
+local GOODS_START_Y = 75
+local GOODS_MARGIN = 12
+local GOODS_TEXT_MARGIN = 4
+
+local GOODS_BUTTON_WIDTH = GOODS_BUTTON_BASE_SIZE + GOODS_TEXT_SIZE + GOODS_MARGIN
+local GOODS_BUTTON_HEIGHT = GOODS_BUTTON_BASE_SIZE
+local GOODS_TEXT_START_X = GOODS_BUTTON_BASE_SIZE + GOODS_TEXT_MARGIN
+local GOODS_HORIZONTAL_SPACING = (GOODS_BUTTON_WIDTH)
+local GOODS_VERTICAL_SPACING = (GOODS_BUTTON_HEIGHT)
+
 local renderCallback1 = function(param)
   ---@type ButtonRenderState
   local state = game.Rendering.ButtonState
@@ -66,6 +169,12 @@ local renderCallback1 = function(param)
     
     local blendStrength = 6 -- * 2
 
+    local gmX = state.x
+    local gmY = state.y
+
+    gmX = gmX + GOODS_OFFSETS[param].x
+    gmY = gmY + GOODS_OFFSETS[param].y
+
     if state.interacting ~= 0 or pLastSelectedGood[0] == param then
       gmID = (param * 2) + 0x26a - 2
       
@@ -74,35 +183,29 @@ local renderCallback1 = function(param)
       end
 
       -- Useful for debug purposes but otherwise ugly
-      game.Rendering.drawBorderBox(game.Rendering.pencilRenderCore, state.x, state.y, state.x + state.width, state.y + state.height, 0xB8EEFB)
+      -- game.Rendering.drawBorderBox(game.Rendering.pencilRenderCore, state.x-1, state.y-1, state.x-1 + state.width + 2, state.y-1 + state.height + 2, 0xFFFFFF)
+      -- game.Rendering.drawBorderBox(game.Rendering.pencilRenderCore, state.x, state.y, state.x + state.width, state.y + state.height, 0xFFFFFF)
+      -- game.Rendering.drawBorderBox(game.Rendering.pencilRenderCore, state.x, state.y, state.x + state.height, state.y + state.height, 0xFFFFFF)
 
-      game.Rendering.renderGM(game.Rendering.textureRenderCore, 46, gmID, state.x + 0, state.y + 0)
+      game.Rendering.renderGM(game.Rendering.textureRenderCore, 46, gmID, gmX, gmY)
     else
-      game.Rendering.renderGMWithBlending(game.Rendering.textureRenderCore, 46, gmID, state.x + 0, state.y + 0, blendStrength)
+      game.Rendering.renderGMWithBlending(game.Rendering.textureRenderCore, 46, gmID, gmX, gmY, blendStrength)
     end
 
     local stubTxt = ffi.cast("char *", "-")
-    if not autoMarketPlayerDataStructs[0].buyEnabled[param] then
-      -- Forbidden icon
-      -- game.Rendering.renderGMWithBlending(game.Rendering.textureRenderCore, 46, 0x2D, state.x - 0, state.y - 0, 16)
-      game.Rendering.renderTextToScreen(textManager, stubTxt, state.x + 50, state.y, 0, 0xB8EEFB, 0x13, 0, 0)
-    else
-      local buyTxt = ffi.cast("char *", string.format("< %d", autoMarketPlayerDataStructs[0].buyValues[param]))
-      game.Rendering.renderTextToScreen(textManager, buyTxt, state.x + 50, state.y, 0, 0xB8EEFB, 0x13, 0, 0)
-    end
 
-    if not autoMarketPlayerDataStructs[0].sellEnabled[param] then
-      game.Rendering.renderTextToScreen(textManager, stubTxt, state.x + 50, state.y + 0x13, 0, 0xB8EEFB, 0x13, 0, 0)
-    else
-      local sellTxt = ffi.cast("char *", string.format("> %d", autoMarketPlayerDataStructs[0].sellValues[param]))
-      game.Rendering.renderTextToScreen(textManager, sellTxt, state.x + 50, state.y + 0x13, 0, 0xB8EEFB, 0x13, 0, 0)
+    local buyTxt = stubTxt
+    if  autoMarketPlayerDataStructs[0].buyEnabled[param] then
+      buyTxt = ffi.cast("char *", string.format("< %d", autoMarketPlayerDataStructs[0].buyValues[param]))
     end
-  -- elseif param >= 30 and param <= 36 then
-  --   renderButtonGM()
-  --   game.Rendering.renderNumber2(textManager, setterValues[(param - 30)], state.x + 0x12, state.y + 0x10, 0, 0xB8EEFB, 0, 0x11, 0, 0)
-  -- elseif param >= 37 and param <= 43 then
-  --   renderButtonGM()
-  --   game.Rendering.renderNumber2(textManager, setterValues[(param - 37)], state.x + 0x12, state.y + 0x10, 0, 0xB8EEFB, 0, 0x11, 0, 0)
+    game.Rendering.renderTextToScreen(textManager, buyTxt, state.x + GOODS_TEXT_START_X, state.y + 5, 0, 0xB8EEFB, 0x13, 0, 0)
+
+    local sellTxt = stubTxt
+    if autoMarketPlayerDataStructs[0].sellEnabled[param] then
+      sellTxt = ffi.cast("char *", string.format("> %d", autoMarketPlayerDataStructs[0].sellValues[param]))
+    end
+    game.Rendering.renderTextToScreen(textManager, sellTxt, state.x + GOODS_TEXT_START_X, state.y + 5 + 0x13, 0, 0xB8EEFB, 0x13, 0, 0)
+
   elseif param == 27 then
     -- renderButtonGM()
     -- or manually:
@@ -287,6 +390,10 @@ local sliderBuyValue_render = function(parameter, thumbXPos, sliderValue, thumbW
 end
 local pSliderBuyValue_render = ffi.cast("void (__cdecl *)(int, int, int, int, bool)", sliderBuyValue_render)
 
+local SLIDER_ROW_X = GOODS_START_X
+local SLIDER_ROW_Y = GOODS_START_Y + GOODS_VERTICAL_SPACING * 3 + GOODS_MARGIN
+local SLIDER_TEXT_WIDTH = 75
+
 local menuItems = {
   {
     menuItemType = 0x01000000, 
@@ -305,14 +412,14 @@ local menuItems = {
     menuItemRenderFunctionType = 0x1,
     position = {
       position = {
-        x = 21,
-        y = 75,
+        x = GOODS_START_X,
+        y = GOODS_START_Y,
       }
     },
-    itemWidth = 50,
-    itemHeight = 50,
+    itemWidth = GOODS_BUTTON_WIDTH,
+    itemHeight = GOODS_BUTTON_HEIGHT,
     callbackParameter = {
-      parameter = 2,
+      parameter = GOODS_DISPLAY_ORDER[1],
     },
   },
   {
@@ -320,14 +427,14 @@ local menuItems = {
     menuItemRenderFunctionType = 0x1,
     position = {
       position = {
-        x = 21 + (55 + 35),
-        y = 75,
+        x = GOODS_START_X + GOODS_HORIZONTAL_SPACING,
+        y = GOODS_START_Y,
       }
     },
-    itemWidth = 50,
-    itemHeight = 50,
+    itemWidth = GOODS_BUTTON_WIDTH,
+    itemHeight = GOODS_BUTTON_HEIGHT,
     callbackParameter = {
-      parameter = 3,
+      parameter = GOODS_DISPLAY_ORDER[2],
     },
   },
   {
@@ -335,14 +442,14 @@ local menuItems = {
     menuItemRenderFunctionType = 0x1,
     position = {
       position = {
-        x = 21 + (55 + 35) + (55 + 35),
-        y = 75,
+        x = GOODS_START_X + GOODS_HORIZONTAL_SPACING + GOODS_HORIZONTAL_SPACING,
+        y = GOODS_START_Y,
       }
     },
-    itemWidth = 50,
-    itemHeight = 50,
+    itemWidth = GOODS_BUTTON_WIDTH,
+    itemHeight = GOODS_BUTTON_HEIGHT,
     callbackParameter = {
-      parameter = 4,
+      parameter = GOODS_DISPLAY_ORDER[3],
     },
   },
   {
@@ -350,14 +457,14 @@ local menuItems = {
     menuItemRenderFunctionType = 0x1,
     position = {
       position = {
-        x = 21 + (55 + 35) + (55 + 35) + (55 + 35),
-        y = 75,
+        x = GOODS_START_X + GOODS_HORIZONTAL_SPACING + GOODS_HORIZONTAL_SPACING + GOODS_HORIZONTAL_SPACING,
+        y = GOODS_START_Y,
       }
     },
-    itemWidth = 50,
-    itemHeight = 50,
+    itemWidth = GOODS_BUTTON_WIDTH,
+    itemHeight = GOODS_BUTTON_HEIGHT,
     callbackParameter = {
-      parameter = 6,
+      parameter = GOODS_DISPLAY_ORDER[4],
     },
   },
   {
@@ -365,14 +472,14 @@ local menuItems = {
     menuItemRenderFunctionType = 0x1,
     position = {
       position = {
-        x = 21 + (55 + 35) + (55 + 35) + (55 + 35) + (55 + 35),
-        y = 75,
+        x = GOODS_START_X + GOODS_HORIZONTAL_SPACING + GOODS_HORIZONTAL_SPACING + GOODS_HORIZONTAL_SPACING + GOODS_HORIZONTAL_SPACING,
+        y = GOODS_START_Y,
       }
     },
-    itemWidth = 50,
-    itemHeight = 50,
+    itemWidth = GOODS_BUTTON_WIDTH,
+    itemHeight = GOODS_BUTTON_HEIGHT,
     callbackParameter = {
-      parameter = 8,
+      parameter = GOODS_DISPLAY_ORDER[5],
     },
   },
   {
@@ -380,14 +487,29 @@ local menuItems = {
     menuItemRenderFunctionType = 0x1,
     position = {
       position = {
-        x = 21 + (55 + 35) + (55 + 35) + (55 + 35) + (55 + 35) + (55 + 35),
-        y = 75,
+        x = GOODS_START_X + GOODS_HORIZONTAL_SPACING + GOODS_HORIZONTAL_SPACING + GOODS_HORIZONTAL_SPACING + GOODS_HORIZONTAL_SPACING + GOODS_HORIZONTAL_SPACING,
+        y = GOODS_START_Y,
       }
     },
-    itemWidth = 50,
-    itemHeight = 50,
+    itemWidth = GOODS_BUTTON_WIDTH,
+    itemHeight = GOODS_BUTTON_HEIGHT,
     callbackParameter = {
-      parameter = 9,
+      parameter = GOODS_DISPLAY_ORDER[6],
+    },
+  },
+  {
+    menuItemType = 0x02000003, -- Button in interaction group (bit flags)
+    menuItemRenderFunctionType = 0x1,
+    position = {
+      position = {
+        x = GOODS_START_X + GOODS_HORIZONTAL_SPACING + GOODS_HORIZONTAL_SPACING + GOODS_HORIZONTAL_SPACING + GOODS_HORIZONTAL_SPACING + GOODS_HORIZONTAL_SPACING + GOODS_HORIZONTAL_SPACING,
+        y = GOODS_START_Y,
+      }
+    },
+    itemWidth = GOODS_BUTTON_WIDTH,
+    itemHeight = GOODS_BUTTON_HEIGHT,
+    callbackParameter = {
+      parameter = GOODS_DISPLAY_ORDER[7],
     },
   },
 
@@ -398,14 +520,14 @@ local menuItems = {
     menuItemRenderFunctionType = 0x1,
     position = {
       position = {
-        x = 21,
-        y = 75 + 55,
+        x = GOODS_START_X,
+        y = GOODS_START_Y + GOODS_VERTICAL_SPACING,
       }
     },
-    itemWidth = 50,
-    itemHeight = 50,
+    itemWidth = GOODS_BUTTON_WIDTH,
+    itemHeight = GOODS_BUTTON_HEIGHT,
     callbackParameter = {
-      parameter = 10,
+      parameter = GOODS_DISPLAY_ORDER[8],
     },
   },
   {
@@ -413,14 +535,14 @@ local menuItems = {
     menuItemRenderFunctionType = 0x1,
     position = {
       position = {
-        x = 21 + (55 + 35),
-        y = 75 + 55,
+        x = GOODS_START_X + GOODS_HORIZONTAL_SPACING,
+        y = GOODS_START_Y + GOODS_VERTICAL_SPACING,
       }
     },
-    itemWidth = 50,
-    itemHeight = 50,
+    itemWidth = GOODS_BUTTON_WIDTH,
+    itemHeight = GOODS_BUTTON_HEIGHT,
     callbackParameter = {
-      parameter = 11,
+      parameter = GOODS_DISPLAY_ORDER[9],
     },
   },
   {
@@ -428,14 +550,14 @@ local menuItems = {
     menuItemRenderFunctionType = 0x1,
     position = {
       position = {
-        x = 21 + (55 + 35) + (55 + 35),
-        y = 75 + 55,
+        x = GOODS_START_X + GOODS_HORIZONTAL_SPACING + GOODS_HORIZONTAL_SPACING,
+        y = GOODS_START_Y + GOODS_VERTICAL_SPACING,
       }
     },
-    itemWidth = 50,
-    itemHeight = 50,
+    itemWidth = GOODS_BUTTON_WIDTH,
+    itemHeight = GOODS_BUTTON_HEIGHT,
     callbackParameter = {
-      parameter = 12,
+      parameter = GOODS_DISPLAY_ORDER[10],
     },
   },
   {
@@ -443,14 +565,14 @@ local menuItems = {
     menuItemRenderFunctionType = 0x1,
     position = {
       position = {
-        x = 21 + (55 + 35) + (55 + 35) + (55 + 35),
-        y = 75 + 55,
+        x = GOODS_START_X + GOODS_HORIZONTAL_SPACING + GOODS_HORIZONTAL_SPACING + GOODS_HORIZONTAL_SPACING,
+        y = GOODS_START_Y + GOODS_VERTICAL_SPACING,
       }
     },
-    itemWidth = 50,
-    itemHeight = 50,
+    itemWidth = GOODS_BUTTON_WIDTH,
+    itemHeight = GOODS_BUTTON_HEIGHT,
     callbackParameter = {
-      parameter = 13,
+      parameter = GOODS_DISPLAY_ORDER[11],
     },
   },
   {
@@ -458,14 +580,14 @@ local menuItems = {
     menuItemRenderFunctionType = 0x1,
     position = {
       position = {
-        x = 21 + (55 + 35) + (55 + 35) + (55 + 35) + (55 + 35),
-        y = 75 + 55,
+        x = GOODS_START_X + GOODS_HORIZONTAL_SPACING + GOODS_HORIZONTAL_SPACING + GOODS_HORIZONTAL_SPACING + GOODS_HORIZONTAL_SPACING,
+        y = GOODS_START_Y + GOODS_VERTICAL_SPACING,
       }
     },
-    itemWidth = 50,
-    itemHeight = 50,
+    itemWidth = GOODS_BUTTON_WIDTH,
+    itemHeight = GOODS_BUTTON_HEIGHT,
     callbackParameter = {
-      parameter = 14,
+      parameter = GOODS_DISPLAY_ORDER[12],
     },
   },
   {
@@ -473,14 +595,29 @@ local menuItems = {
     menuItemRenderFunctionType = 0x1,
     position = {
       position = {
-        x = 21 + (55 + 35) + (55 + 35) + (55 + 35) + (55 + 35) + (55 + 35),
-        y = 75 + 55,
+        x = GOODS_START_X + GOODS_HORIZONTAL_SPACING + GOODS_HORIZONTAL_SPACING + GOODS_HORIZONTAL_SPACING + GOODS_HORIZONTAL_SPACING + GOODS_HORIZONTAL_SPACING,
+        y = GOODS_START_Y + GOODS_VERTICAL_SPACING,
       }
     },
-    itemWidth = 50,
-    itemHeight = 50,
+    itemWidth = GOODS_BUTTON_WIDTH,
+    itemHeight = GOODS_BUTTON_HEIGHT,
     callbackParameter = {
-      parameter = 16,
+      parameter = GOODS_DISPLAY_ORDER[13],
+    },
+  },
+  {
+    menuItemType = 0x02000003, -- Button in interaction group (bit flags)
+    menuItemRenderFunctionType = 0x1,
+    position = {
+      position = {
+        x = GOODS_START_X + GOODS_HORIZONTAL_SPACING + GOODS_HORIZONTAL_SPACING + GOODS_HORIZONTAL_SPACING + GOODS_HORIZONTAL_SPACING + GOODS_HORIZONTAL_SPACING + GOODS_HORIZONTAL_SPACING,
+        y = GOODS_START_Y + GOODS_VERTICAL_SPACING,
+      }
+    },
+    itemWidth = GOODS_BUTTON_WIDTH,
+    itemHeight = GOODS_BUTTON_HEIGHT,
+    callbackParameter = {
+      parameter = GOODS_DISPLAY_ORDER[14],
     },
   },
 
@@ -492,14 +629,14 @@ local menuItems = {
     menuItemRenderFunctionType = 0x1,
     position = {
       position = {
-        x = 21,
-        y = 75 + 55 + 55,
+        x = GOODS_START_X,
+        y = GOODS_START_Y + GOODS_VERTICAL_SPACING + GOODS_VERTICAL_SPACING,
       }
     },
-    itemWidth = 50,
-    itemHeight = 50,
+    itemWidth = GOODS_BUTTON_WIDTH,
+    itemHeight = GOODS_BUTTON_HEIGHT,
     callbackParameter = {
-      parameter = 17,
+      parameter = GOODS_DISPLAY_ORDER[15],
     },
   },
   {
@@ -507,14 +644,14 @@ local menuItems = {
     menuItemRenderFunctionType = 0x1,
     position = {
       position = {
-        x = 21 + (55 + 35),
-        y = 75 + 55 + 55,
+        x = GOODS_START_X + GOODS_HORIZONTAL_SPACING,
+        y = GOODS_START_Y + GOODS_VERTICAL_SPACING + GOODS_VERTICAL_SPACING,
       }
     },
-    itemWidth = 50,
-    itemHeight = 50,
+    itemWidth = GOODS_BUTTON_WIDTH,
+    itemHeight = GOODS_BUTTON_HEIGHT,
     callbackParameter = {
-      parameter = 18,
+      parameter = GOODS_DISPLAY_ORDER[16],
     },
   },
   {
@@ -522,14 +659,14 @@ local menuItems = {
     menuItemRenderFunctionType = 0x1,
     position = {
       position = {
-        x = 21 + (55 + 35) + (55 + 35),
-        y = 75 + 55 + 55,
+        x = GOODS_START_X + GOODS_HORIZONTAL_SPACING + GOODS_HORIZONTAL_SPACING,
+        y = GOODS_START_Y + GOODS_VERTICAL_SPACING + GOODS_VERTICAL_SPACING,
       }
     },
-    itemWidth = 50,
-    itemHeight = 50,
+    itemWidth = GOODS_BUTTON_WIDTH,
+    itemHeight = GOODS_BUTTON_HEIGHT,
     callbackParameter = {
-      parameter = 19,
+      parameter = GOODS_DISPLAY_ORDER[17],
     },
   },
   {
@@ -537,14 +674,14 @@ local menuItems = {
     menuItemRenderFunctionType = 0x1,
     position = {
       position = {
-        x = 21 + (55 + 35) + (55 + 35) + (55 + 35),
-        y = 75 + 55 + 55,
+        x = GOODS_START_X + GOODS_HORIZONTAL_SPACING + GOODS_HORIZONTAL_SPACING + GOODS_HORIZONTAL_SPACING,
+        y = GOODS_START_Y + GOODS_VERTICAL_SPACING + GOODS_VERTICAL_SPACING,
       }
     },
-    itemWidth = 50,
-    itemHeight = 50,
+    itemWidth = GOODS_BUTTON_WIDTH,
+    itemHeight = GOODS_BUTTON_HEIGHT,
     callbackParameter = {
-      parameter = 20,
+      parameter = GOODS_DISPLAY_ORDER[18],
     },
   },
   {
@@ -552,14 +689,14 @@ local menuItems = {
     menuItemRenderFunctionType = 0x1,
     position = {
       position = {
-        x = 21 + (55 + 35) + (55 + 35) + (55 + 35) + (55 + 35),
-        y = 75 + 55 + 55,
+        x = GOODS_START_X + GOODS_HORIZONTAL_SPACING + GOODS_HORIZONTAL_SPACING + GOODS_HORIZONTAL_SPACING + GOODS_HORIZONTAL_SPACING,
+        y = GOODS_START_Y + GOODS_VERTICAL_SPACING + GOODS_VERTICAL_SPACING,
       }
     },
-    itemWidth = 50,
-    itemHeight = 50,
+    itemWidth = GOODS_BUTTON_WIDTH,
+    itemHeight = GOODS_BUTTON_HEIGHT,
     callbackParameter = {
-      parameter = 21,
+      parameter = GOODS_DISPLAY_ORDER[19],
     },
   },
   {
@@ -567,86 +704,16 @@ local menuItems = {
     menuItemRenderFunctionType = 0x1,
     position = {
       position = {
-        x = 21 + (55 + 35) + (55 + 35) + (55 + 35) + (55 + 35) + (55 + 35),
-        y = 75 + 55 + 55,
+        x = GOODS_START_X + GOODS_HORIZONTAL_SPACING + GOODS_HORIZONTAL_SPACING + GOODS_HORIZONTAL_SPACING + GOODS_HORIZONTAL_SPACING + GOODS_HORIZONTAL_SPACING,
+        y = GOODS_START_Y + GOODS_VERTICAL_SPACING + GOODS_VERTICAL_SPACING,
       }
     },
-    itemWidth = 50,
-    itemHeight = 50,
+    itemWidth = GOODS_BUTTON_WIDTH,
+    itemHeight = GOODS_BUTTON_HEIGHT,
     callbackParameter = {
-      parameter = 22,
+      parameter = GOODS_DISPLAY_ORDER[20],
     },
   },
-
-   -- fourth row
-
-  {
-    menuItemType = 0x02000003, -- Button in interaction group (bit flags)
-    menuItemRenderFunctionType = 0x1,
-    position = {
-      position = {
-        x = 21,
-        y = 75 + 55 + 55 + 55,
-      }
-    },
-    itemWidth = 50,
-    itemHeight = 50,
-    callbackParameter = {
-      parameter = 23,
-    },
-  },
-  {
-    menuItemType = 0x02000003, -- Button in interaction group (bit flags)
-    menuItemRenderFunctionType = 0x1,
-    position = {
-      position = {
-        x = 21 + (55 + 35),
-        y = 75 + 55 + 55 + 55,
-      }
-    },
-    itemWidth = 50,
-    itemHeight = 50,
-    callbackParameter = {
-      parameter = 24,
-    },
-  },
-  -- {
-  --   menuItemType = 0x02000003, -- Button in interaction group (bit flags)
-  --   menuItemRenderFunctionType = 0x1,
-  --   position = {
-  --     position = {
-  --       x = 21 + (55 + 35) + (55 + 35),
-  --       y = 75 + 55 + 55 + 55,
-  --     }
-  --   },
-  --   itemWidth = 50,
-  --   itemHeight = 50,
-  --   callbackParameter = {
-  --     parameter = 23,
-  --   },
-  -- },
-
-  -- 
-
-  
-  -- {
-  --   menuItemType = 0x02000003, -- Button in interaction group (bit flags)
-  --   menuItemRenderFunctionType = 0x1,
-  --   -- firstItemTypeData = {
-  --   --   gmDataIndex = 0x2D,
-  --   -- },
-  --   position = {
-  --     position = {
-  --       x = 600 - 55,
-  --       y = 408 - 55,
-  --     }
-  --   },
-  --   itemWidth = 50,
-  --   itemHeight = 50,
-  --   callbackParameter = {
-  --     parameter = 27,
-  --   },
-  -- },
 
   -- Top right buttons
   {
@@ -713,28 +780,6 @@ local menuItems = {
       end),
     }
   },
-  -- Sleep button
-  -- {
-  --   menuItemType = 0x02000003, -- Button in interaction group (bit flags)
-  --   menuItemRenderFunctionType = 0x3,
-  --   firstItemTypeData = {
-  --     gmDataIndex = 0xCD,
-  --   },
-  --   position = {
-  --     position = {
-  --       x = 600 - 45 - 35 - 50,
-  --       y = 15,
-  --     }
-  --   },
-  --   itemWidth = 50,
-  --   itemHeight = 50,
-  --   callbackParameter = {
-  --     parameter = 26,
-  --   },
-  --   menuItemRenderFunction = {
-  --     gmDataImage = game.Rendering.generalButtonRender,
-  --   }
-  -- },
 
 
   -- Slider: goods image
@@ -746,12 +791,12 @@ local menuItems = {
     menuItemRenderFunctionType = 0x1,
     position = {
       position = {
-        x = 600 - 256 - 50 - 50 - 100 - 100,
-        y = 408 - 10 - 20 - 10 - 30 - 5,
+        x = 600 - 50 - 15 - 256 - 5 - 140 - 50,
+        y = SLIDER_ROW_Y,
       }
     },
-    itemWidth = 50,
-    itemHeight = 50,
+    itemWidth = 65,
+    itemHeight = 65,
     callbackParameter = {
       parameter = 1,
     },
@@ -759,9 +804,12 @@ local menuItems = {
       simple = ffi.cast("void (__cdecl *)(int)", function(parameter)
         ---@type ButtonRenderState
         local state = game.Rendering.ButtonState
-        state.interacting = 0
+        -- state.interacting = 0
+        -- state.height = 60
+
         -- For some reason this image has the wrong dimensions...
-        -- game.Rendering.renderButtonBackground(game.Rendering.alphaAndButtonSurface, 0, -1)
+        -- game.Rendering.renderButtonBackground(game.Rendering.alphaAndButtonSurface, -1, -1)
+        game.Rendering.drawBlendedBlackBox(game.Rendering.pencilRenderCore, state.x, state.y, state.x + state.width, state.y + state.height, 0x14)
 
         local good = chooseFocusGood()
         if good ~= 0 then
@@ -769,9 +817,9 @@ local menuItems = {
           if good == pLastSelectedGood[0] then
             gmID = gmID + 1
           end
-          game.Rendering.renderGM(game.Rendering.textureRenderCore, 46, gmID, state.x, state.y)
+          game.Rendering.renderGM(game.Rendering.textureRenderCore, 46, gmID, state.x + 15 + GOODS_OFFSETS[good].x, state.y + 4 + GOODS_OFFSETS[good].y)
           local txt = "0" -- TODO: current resource count
-          game.Rendering.renderTextToScreenConst(game.Rendering.textManager, txt, state.x + (state.width / 2), state.y + state.height, 1, 0xB8EEFB, 0x12, 0, 0) 
+          game.Rendering.renderTextToScreenConst(game.Rendering.textManager, txt, state.x + 15 + 20, state.y + 8 + 40, 1, 0xB8EEFB, 0x12, 0, 0) 
         end
       end),
     },
@@ -792,7 +840,7 @@ local menuItems = {
     position = {
       position = {
         x = 600 - 50 - 15 - 256 - 5,
-        y = 408 - 10 - 20 - 10 - 30 - 5,
+        y = SLIDER_ROW_Y,
       }
     },
     itemWidth = sliderMax,
@@ -816,7 +864,7 @@ local menuItems = {
     position = {
       position = {
         x = 600 - 50 - 15,
-        y = 408 - 10 - 20 - 10 - 30 - 5,
+        y = SLIDER_ROW_Y,
       }
     },
     itemWidth = 50,
@@ -840,24 +888,6 @@ local menuItems = {
       end),
     },
   },
-  -- {
-  --   menuItemType = 0x02000003, -- Button in interaction group (bit flags)
-  --   menuItemRenderFunctionType = 0x3,
-  --   firstItemTypeData = {
-  --     gmDataIndex = 0x023A,
-  --   },
-  --   position = {
-  --     position = {
-  --       x = 600 - 50 - 10,
-  --       y = 408 - 10 - 20 - 10 - 30 - 5,
-  --     }
-  --   },
-  --   itemWidth = 30,
-  --   itemHeight = 30,
-  --   callbackParameter = {
-  --     parameter = 0,
-  --   },
-  -- },
 
   -- Slider: sell value
   {
@@ -869,7 +899,7 @@ local menuItems = {
     position = {
       position = {
         x = 600 - 50 - 15 - 256 - 5,
-        y = 408 - 10 - 20 - 10,
+        y = SLIDER_ROW_Y + 30 + 5,
       }
     },
     itemWidth = sliderMax,
@@ -893,7 +923,7 @@ local menuItems = {
     position = {
       position = {
         x = 600 - 50 - 15,
-        y = 408 - 10 - 20 - 10,
+        y = SLIDER_ROW_Y + 30 + 5,
       }
     },
     itemWidth = 50,
@@ -941,7 +971,9 @@ ModalMenu:createModalMenu({
   backgroundColor = 0,
   menuModalRenderFunction = function(x, y, width, height)
     -- render "Auto market"
+    game.Rendering.drawBlendedBlackBox(game.Rendering.pencilRenderCore, x+6, y+6, x + 600 - 6, y + 408-6, 0x14)
     game.Rendering.renderTextToScreenConst(game.Rendering.textManager, pAutomarketTitle, x + 20, y + 25, 0, 0xCCFAFF, 0xF, false, 0)
+    
   end,
   menu = menu,
 })
