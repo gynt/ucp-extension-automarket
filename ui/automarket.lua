@@ -21,7 +21,7 @@ local textManager = game.Rendering.textManager
 -- log(ERROR, string.format("%s", getText(textManager, 224, 7)))
 
 local AUTOMARKET_MODAL_MENU_ID = 2025
-local AUTOMARKET_TITLE = "Auto Market"
+local AUTOMARKET_TITLE = "Auto market"
 local pAutomarketTitle = registerObject(ffi.new("char[?]", #AUTOMARKET_TITLE + 1))
 ffi.copy(pAutomarketTitle, AUTOMARKET_TITLE)
 
@@ -30,9 +30,9 @@ local defaultHelpTxtIndex = 1
 local helpTxtIndex = defaultHelpTxtIndex
 local helpTxts = {
   "",
-  "Auto Market will stop buying goods when your gold is less than this value",
-  "Auto Market is currently switched off. Switch it on to use it",
-  "Auto Market is currently switched on. Switch it off to stop using it",
+  "Auto market will stop buying goods when your gold is less than this value",
+  "Auto market is currently switched off. Switch it on to use it",
+  "Auto market is currently switched on. Switch it off to stop using it",
   "Close without saving",
   "Save and close",
   "Click to select resource",
@@ -335,7 +335,11 @@ local sliderActionHandler = function(parameter, event, pMinValue, pMaxValue, pCu
     elseif event == 7 then
       -- announce step size
       local pCurrentStep = pCurrentValue
-      pCurrentStep[0] = GOODS_SLIDER_STEP
+      if good == 0 then 
+        pCurrentStep[0] = 0
+      else
+        pCurrentStep[0] = GOODS_SLIDER_STEP
+      end
     else
       log(WARNING, string.format("%d, %d, %d, %d, %d", parameter, event, pMinValue[0], pMaxValue[0], pCurrentValue[0]))
     end
@@ -423,7 +427,7 @@ local sliderRenderFunction = function(parameter, thumbXPos, sliderValue, thumbWi
 
     local good = chooseFocusGood()
     
-    game.Rendering.drawColorBox(game.Rendering.pencilRenderCore, thumbXPos + state.x + 1, state.y + 2, thumbXPos + state.x - 2 + thumbWidth, state.height - 4 + state.y, color)
+    game.Rendering.drawColorBox(game.Rendering.pencilRenderCore, thumbXPos + state.x + 1, state.y + 4, thumbXPos + state.x - 2 + thumbWidth, state.height - 8 + state.y, color)
     
     game.Rendering.renderTextToScreenConst(game.Rendering.textManager, txt, state.x - 75, state.y + 6, 1, 0xCCFAFF, 0x12, 0x0, 0x0)
     if good > 0 and pEnabled[good] then  
@@ -445,7 +449,7 @@ local sliderRenderFunction = function(parameter, thumbXPos, sliderValue, thumbWi
       color = game.Rendering.Colors.pColorDarkLime[0]
     end
 
-    game.Rendering.drawColorBox(game.Rendering.pencilRenderCore, thumbXPos + state.x + 1, state.y + 2, thumbXPos + state.x - 2 + thumbWidth, state.height - 4 + state.y, color)
+    game.Rendering.drawColorBox(game.Rendering.pencilRenderCore, thumbXPos + state.x + 1, state.y + 4, thumbXPos + state.x - 2 + thumbWidth, state.height - 8 + state.y, color)
     
     local txt = "Gold Reserve:"
     game.Rendering.renderTextToScreenConst(game.Rendering.textManager, txt, state.x - 100, state.y + 6, 1, 0xCCFAFF, 0x12, 0x0, 0x0)
@@ -832,12 +836,12 @@ local menuItems = {
       simple = ffi.cast("void (__cdecl *)(int)", function(parameter)
         ---@type ButtonRenderState
         local state = game.Rendering.ButtonState
-        state.interacting = autoMarketPlayerDataStructs[0].enabled
+        state.interacting = state.interacting or autoMarketPlayerDataStructs[0].enabled
         game.Rendering.renderButtonBackground(game.Rendering.alphaAndButtonSurface, 0, -1)
 
-        local txt = "Auto Market: Off"
+        local txt = "Off"
         if autoMarketPlayerDataStructs[0].enabled then
-          txt = "Auto Market: On"
+          txt = "On"
         end
         game.Rendering.renderTextToScreenConst(game.Rendering.textManager, txt, state.x + 6, state.y + 6, 0, 0xB8EEFB, 0x12, 0, 0)
       end),
@@ -907,7 +911,7 @@ local menuItems = {
     menuItemRenderFunctionType = 0x4, -- Slider
     position = {
       position = {
-        x = 600 - 50 - 15 - 256 - 5,
+        x = 600 - 50 - 15 - 256 - 10,
         y = SLIDER_ROW_Y,
       }
     },
@@ -966,7 +970,7 @@ local menuItems = {
     menuItemRenderFunctionType = 0x4, -- Slider
     position = {
       position = {
-        x = 600 - 50 - 15 - 256 - 5,
+        x = 600 - 50 - 15 - 256 - 10,
         y = SLIDER_ROW_Y + 30 + 5,
       }
     },
@@ -1035,7 +1039,7 @@ local menuItems = {
       parameter = 34,
     },
     firstItemTypeData = {
-      itemsToSkip = GOLD_SLIDER_STEP,
+      itemsToSkip = 10,
     },
     menuItemActionHandler = {
       slider = pSliderActionHandler,
