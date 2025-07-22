@@ -1,8 +1,11 @@
+--tests/test3-modal.lua
 -- jit.off(true, true)
 
---tests/test3-modal.lua
 local core = remote.interface.core
 local utils = remote.interface.utils
+
+local common = require("ucp/modules/automarket/common")
+common.loadHeaders()
 
 ---@type Menu
 local menu
@@ -45,16 +48,16 @@ local helpTxts = {
 
 log(DEBUG, AUTOMARKET_TITLE, pAutomarketTitle)
 
-ffi.cdef([[
-  typedef struct AutoMarketPlayerData {
-    bool enabled;
-    int goldReserve;
-    bool buyEnabled[25];
-    bool sellEnabled[25];
-    int buyValues[25];
-    int sellValues[25];
-  } AutoMarketPlayerData;
-]])
+-- ffi.cdef([[
+--   typedef struct AutoMarketPlayerData {
+--     bool enabled;
+--     int goldReserve;
+--     bool buyEnabled[25];
+--     bool sellEnabled[25];
+--     int buyValues[25];
+--     int sellValues[25];
+--   } AutoMarketPlayerData;
+-- ]])
 
 local autoMarketPlayerDataStructs = ffi.new("AutoMarketPlayerData[9]", {})
 
@@ -68,6 +71,13 @@ local actionCallback1 = function(param)
     else
       pLastSelectedGood[0] = param
     end
+  elseif param == 28 then
+    log(VERBOSE, "save clicked")
+    remote.events.send("automarket/ui/save", {
+      enabled = autoMarketPlayerDataStructs[0].enabled,
+    })
+  elseif param == 29 then
+    log(VERBOSE, "close clicked")
   end
 end
 
