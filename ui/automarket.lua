@@ -60,6 +60,11 @@ log(DEBUG, AUTOMARKET_TITLE, pAutomarketTitle)
 -- ]])
 
 local autoMarketPlayerDataStructs = ffi.new("AutoMarketPlayerData[9]", {})
+local pAutoMarketPlayerDataStructs = tonumber(ffi.cast("unsigned long", autoMarketPlayerDataStructs))
+remote.events.receive("automarket/ui/data/get/pointer", function(key, value)
+  log(VERBOSE, string.format("received: %s", key))
+  remote.events.send("automarket/ui/data/set/pointer", pAutoMarketPlayerDataStructs)
+end)
 
 local pCurrentlyHoveredGood = ffi.new("int[1]", {})
 local pLastSelectedGood = ffi.new("int[1]", {})
@@ -73,7 +78,7 @@ local actionCallback1 = function(param)
     end
   elseif param == 28 then
     log(VERBOSE, "save clicked")
-    remote.events.send("automarket/ui/save", {
+    remote.events.send("automarket/ui/data/save", {
       enabled = autoMarketPlayerDataStructs[0].enabled,
     })
   elseif param == 29 then
