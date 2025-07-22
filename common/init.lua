@@ -3,6 +3,8 @@ if remote == nil then
   ffi = modules.cffi:cffi()  
 end
 
+local sizes = {}
+
 local function loadHeaders()
   ffi.cdef([[
 
@@ -16,8 +18,11 @@ typedef struct AutoMarketPlayerData {
 } AutoMarketPlayerData;
 
   ]])
+
+  sizes["AutoMarketPlayerData"] = ffi.sizeof("AutoMarketPlayerData")
 end
 
 return {
   loadHeaders = loadHeaders,
+  sizes = sizes,
 }
