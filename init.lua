@@ -16,11 +16,15 @@ local automarketData, pAutomarketData, pAutomarketPlayerSettings
 local automarketProtocolNumber = -1
 local automarketProtocolKey = ""
 
+local function getControllingPlayerID()
+  return 1  -- TODO: involve player number
+end
+
 ---@type Handler
 local automarketProtocolHandler = {
   schedule = function(self, meta, context)
     log(VERBOSE, string.format("scheduling automarket protocol for comitting data for player: %s", 1))
-    meta.parameters:serializeInteger(1) -- TODO: involve player number
+    meta.parameters:serializeInteger(getControllingPlayerID())
     -- 0th element is the UI state
     meta.parameters:serializeBytes(core.readBytes(pAutomarketPlayerSettings + 0, autoMarketPlayerDataSize))
   end,
@@ -32,6 +36,11 @@ local automarketProtocolHandler = {
     local data = meta.parameters:deserializeBytes(autoMarketPlayerDataSize)
     log(VERBOSE, string.format("executing automarket protocol for comitting data for player: %s", playerID))
     core.writeBytes(pAutomarketPlayerSettings + (playerID * autoMarketPlayerDataSize), data)
+
+    if playerID == getControllingPlayerID() then 
+      -- If this data is for us, also update UI slot
+      core.writeBytes(pAutomarketPlayerSettings + 0, data)
+    end
   end
 }
 
