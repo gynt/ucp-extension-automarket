@@ -12,7 +12,7 @@ return {
     local ui = modules.ui
     ui:registerEventHandler("automarket/ui/data/save", function(key, obj)
       log(VERBOSE, string.format("save called!"))
-      callbacks.saveData()
+      callbacks.commitData()
     end)
 
     ui:registerEventHandler("automarket/ui/data/set/pointer", function(key, obj) 

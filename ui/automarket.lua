@@ -1,4 +1,4 @@
---tests/test3-modal.lua
+--automarket
 -- jit.off(true, true)
 
 local core = remote.interface.core
@@ -48,22 +48,15 @@ local helpTxts = {
 
 log(DEBUG, AUTOMARKET_TITLE, pAutomarketTitle)
 
--- ffi.cdef([[
---   typedef struct AutoMarketPlayerData {
---     bool enabled;
---     int goldReserve;
---     bool buyEnabled[25];
---     bool sellEnabled[25];
---     int buyValues[25];
---     int sellValues[25];
---   } AutoMarketPlayerData;
--- ]])
-
-local autoMarketPlayerDataStructs = ffi.new("AutoMarketPlayerData[9]", {})
-local pAutoMarketPlayerDataStructs = tonumber(ffi.cast("unsigned long", autoMarketPlayerDataStructs))
+local automarketDataArray = ffi.new("AutoMarketData[1]", {})
+registerObject(automarketDataArray)
+local automarketData = automarketDataArray[0]
+automarketData.header.version = 1
+local autoMarketPlayerDataStructs = automarketData.playerSettings
+local pAutoMarketData = tonumber(ffi.cast("unsigned long", automarketDataArray))
 remote.events.receive("automarket/ui/data/get/pointer", function(key, value)
   log(VERBOSE, string.format("received: %s", key))
-  remote.events.send("automarket/ui/data/set/pointer", pAutoMarketPlayerDataStructs)
+  remote.events.send("automarket/ui/data/set/pointer", pAutoMarketData)
 end)
 
 local pCurrentlyHoveredGood = ffi.new("int[1]", {})

@@ -8,6 +8,7 @@ local sizes = {}
 local function loadHeaders()
   ffi.cdef([[
 
+  // This info should be in lockstep
 typedef struct AutoMarketPlayerData {
   bool enabled;
   int goldReserve;
@@ -17,9 +18,27 @@ typedef struct AutoMarketPlayerData {
   int sellValues[25];
 } AutoMarketPlayerData;
 
+typedef struct AutoMarketPlayerCredit {
+  int credit[25];
+} AutoMarketPlayerCredit;
+
+typedef struct AutoMarketDataHeader {
+  int version;
+} AutoMarketDataHeader;
+
+// This info should be saved
+typedef struct AutoMarketData {
+  AutoMarketDataHeader header;
+  AutoMarketPlayerData playerSettings[9];
+  AutoMarketPlayerCredit playerCredit[9];
+} AutoMarketData;
+
   ]])
 
   sizes["AutoMarketPlayerData"] = ffi.sizeof("AutoMarketPlayerData")
+  sizes["AutoMarketPlayerCredit"] = ffi.sizeof("AutoMarketPlayerCredit")
+  sizes["AutoMarketData"] = ffi.sizeof("AutoMarketData")
+  sizes["AutoMarketDataHeader"] = ffi.sizeof("AutoMarketDataHeader")
 end
 
 return {
