@@ -3,6 +3,7 @@
 
 local core = remote.interface.core
 local utils = remote.interface.utils
+local market = require("ucp/modules/automarket/ui/market")
 
 local common = require("ucp/modules/automarket/common")
 common.loadHeaders()
@@ -898,7 +899,8 @@ local menuItems = {
             gmID = gmID + 1
           end
           game.Rendering.renderGM(game.Rendering.textureRenderCore, 46, gmID, state.x + 15 + GOODS_OFFSETS[good].x, state.y + 4 + GOODS_OFFSETS[good].y)
-          local txt = "0" -- TODO: current resource count
+          ---TODO: add current player logic to get the right resources...
+          local txt = string.format("%d", market.playerResources[1][good])
           game.Rendering.renderTextToScreenConst(game.Rendering.textManager, txt, state.x + 15 + 20, state.y + 8 + 40, 1, 0xB8EEFB, 0x12, 0, 0) 
         end
       end),
