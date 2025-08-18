@@ -900,7 +900,7 @@ local menuItems = {
           end
           game.Rendering.renderGM(game.Rendering.textureRenderCore, 46, gmID, state.x + 15 + GOODS_OFFSETS[good].x, state.y + 4 + GOODS_OFFSETS[good].y)
           ---TODO: add current player logic to get the right resources...
-          local txt = string.format("%d", market.playerResources[1][good])
+          local txt = string.format("%d", market.playerResources[market.pPlayerID[0]][good])
           game.Rendering.renderTextToScreenConst(game.Rendering.textManager, txt, state.x + 15 + 20, state.y + 8 + 40, 1, 0xB8EEFB, 0x12, 0, 0) 
         end
       end),

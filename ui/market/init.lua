@@ -36,8 +36,11 @@ for i=0, 8 do
   _pResources[i] = ffi.cast("int*", _pResources0 + (i * 0x39f4))
 end
 
+local _, pGameSynchronyState = utils.AOBExtract("C7 ? I( ? ? ? ? ) ? ? ? ? FF D7")
+
 return {
   buyGoods = buyGoods,
   sellGoods = sellGoods,
   playerResources = _pResources,
+  pPlayerID = ffi.cast("int *", pGameSynchronyState + 0x109e74)
 }

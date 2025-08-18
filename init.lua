@@ -5,6 +5,7 @@ local ffi = modules.cffi:cffi()
 local automarket = {}
 
 local common = require("common")
+local addresses = require("common.addresses")
 common.loadHeaders()
 local autoMarketPlayerDataSize = common.sizes["AutoMarketPlayerData"]
 local autoMarketPlayerCreditSize = common.sizes["AutoMarketPlayerCredit"]
@@ -17,7 +18,11 @@ local automarketProtocolNumber = -1
 local automarketProtocolKey = ""
 
 local function getControllingPlayerID()
-  return 1  -- TODO: involve player number
+  return addresses.pPlayerID[0]
+end
+
+local function getInvoker()
+  return addresses.pProtocolInvokerPlayerID[0]
 end
 
 ---@type Handler
@@ -33,11 +38,17 @@ local automarketProtocolHandler = {
   end,
   execute = function(self, meta)
     local playerID = meta.parameters:deserializeInteger()
-    local data = meta.parameters:deserializeBytes(autoMarketPlayerDataSize)
-    log(VERBOSE, string.format("executing automarket protocol for comitting data for player: %s", playerID))
-    core.writeBytes(pAutomarketPlayerSettings + (playerID * autoMarketPlayerDataSize), data)
+    local realPlayer = getInvoker()
 
-    if playerID == getControllingPlayerID() then 
+    if playerID ~= realPlayer then
+      log(WARNING, string.format("player %s may be cheating by trying to set the automarket of player %s", realPlayer, playerID))
+    end
+
+    local data = meta.parameters:deserializeBytes(autoMarketPlayerDataSize)
+    log(VERBOSE, string.format("executing automarket protocol for comitting data for player: %s", realPlayer))
+    core.writeBytes(pAutomarketPlayerSettings + (realPlayer * autoMarketPlayerDataSize), data)
+
+    if realPlayer == getControllingPlayerID() then 
       -- If this data is for us, also update UI slot
       core.writeBytes(pAutomarketPlayerSettings + 0, data)
     end
