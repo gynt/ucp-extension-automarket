@@ -81,7 +81,7 @@ local GOODS_DISPLAY_ORDER = {
   3,
   4,
   6,
-  8,
+  7,
   9,
   24,
 
@@ -183,8 +183,11 @@ local renderCallback1 = function(param)
   ---@type ButtonRenderState
   local state = game.Rendering.ButtonState
 
+  local renderParam = param
+  if param == 7 then renderParam = 8 end
+
   if param < 25 then
-    local gmID = (param * 2) + 0x269 - 2
+    local gmID = (renderParam * 2) + 0x269 - 2
     
     local blendStrength = 6 -- * 2
 
@@ -195,7 +198,7 @@ local renderCallback1 = function(param)
     gmY = gmY + GOODS_OFFSETS[param].y
 
     if state.interacting ~= 0 or pLastSelectedGood[0] == param then
-      gmID = (param * 2) + 0x26a - 2
+      gmID = (renderParam * 2) + 0x26a - 2
       
       if pLastSelectedGood[0] ~= param then
         pCurrentlyHoveredGood[0] = param
@@ -890,7 +893,10 @@ local menuItems = {
 
         local good = chooseFocusGood()
         if good ~= 0 then
-          local gmID = (good * 2) + 0x269 - 2
+          local renderParam = good
+          if good == 7 then renderParam = 8 end
+
+          local gmID = (renderParam * 2) + 0x269 - 2
           if good == pLastSelectedGood[0] then
             gmID = gmID + 1
           end
@@ -1115,12 +1121,16 @@ local callback = registerObject(function()
     if isLordAlive and hasMarket and am.enabled then
       -- selling
       for _, good in ipairs(GOODS_DISPLAY_ORDER) do
-        local illegalSellValue = am.buyEnabled[good] and am.sellValues[good] <= am.buyValues[good]
-        if am.sellEnabled[good] and illegalSellValue == false then
-          local surplus = resources[good] - am.sellValues[good]
-          if surplus > 0 then
-            log(INFO, string.format("sold goods: %s (amount: %s)", good, surplus))
-            market.sellGoods(market.AICState, playerID, good, surplus)
+        local illegalSellValue = am.buyEnabled[good] and (am.sellValues[good] <= am.buyValues[good])
+        if am.sellEnabled[good] then
+          if illegalSellValue == false then
+            local surplus = resources[good] - am.sellValues[good]
+            if surplus > 0 then
+              log(INFO, string.format("sold goods: %s (amount: %s)", good, surplus))
+              market.sellGoods(market.AICState, playerID, good, surplus)
+            end
+          else
+            log(INFO, string.format("illegal sell value for good: %s (sell: %s, buy: %s)", good, am.sellValues[good], am.buyValues[good]))
           end
         end        
       end
@@ -1131,20 +1141,24 @@ local callback = registerObject(function()
         if availableGold < 0 then
           break
         end
-        local illegalBuyValue = am.sellEnabled[good] and am.buyValues[good] >= am.sellValues[good]
-        if am.buyEnabled[good] and illegalBuyValue == false then
-          local shortage = am.buyValues[good] - resources[good]
-          if shortage > 0 then
-            local goldRequired = market.getBuyPrice(market.GameState, playerID, good, shortage)
-            if availableGold > goldRequired then
-              if not market.buyGoods(market.AICState, playerID, good, shortage) then
-                log(WARNING, string.format("failed to buy goods: %s (amount: %s, gold: %s)", good, shortage, goldRequired))
+        local illegalBuyValue = am.sellEnabled[good] and (am.buyValues[good] >= am.sellValues[good])
+        if am.buyEnabled[good] then
+          if illegalBuyValue == false then
+            local shortage = am.buyValues[good] - resources[good]
+            if shortage > 0 then
+              local goldRequired = market.getBuyPrice(market.GameState, playerID, good, shortage)
+              if availableGold > goldRequired then
+                if not market.buyGoods(market.AICState, playerID, good, shortage) then
+                  log(WARNING, string.format("failed to buy goods: %s (amount: %s, gold: %s)", good, shortage, goldRequired))
+                else
+                  log(INFO, string.format("bought goods: %s (amount: %s, gold: %s)", good, shortage, goldRequired))
+                end
               else
-                log(INFO, string.format("bought goods: %s (amount: %s, gold: %s)", good, shortage, goldRequired))
+                log(WARNING, string.format("failed to buy goods (not enough gold): %s (amount: %s, gold: %s, available: %s)", good, shortage, goldRequired, availableGold))
               end
-            else
-              log(WARNING, string.format("failed to buy goods (not enough gold): %s (amount: %s, gold: %s, available: %s)", good, shortage, goldRequired, availableGold))
             end
+          else
+            log(WARNING, string.format("failed to buy goods (illegal buy value): %s (buy: %s, sell: %s)", good, am.buyValues[good], am.sellValues[good]))
           end
         end
       end
