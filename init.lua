@@ -76,6 +76,24 @@ function automarket:enable(config)
       log(WARNING, "do the commit!")
       p:invokeProtocol(automarketProtocolNumber)
     end,
+    allocateMarketProcess = function(pointer)
+      
+      local asm = core.AssemblyLambda([[
+          cmp dword [pWeekChanged], 0
+          je finish
+
+          call callback
+
+        finish:
+          ; end of script
+      ]], {
+        pWeekChanged = addresses.pWeekChanged,
+        callback = pointer,
+      })
+      -- 0045b4c0
+      core.insertCode(core.AOBScan("BF 01 00 00 00 8D B1 A4 47 03 00"), 5, {asm}, nil, "after")
+
+    end,
   })
 
   local mapdatapath = "automarketplayerdata.bin"

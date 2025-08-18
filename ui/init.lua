@@ -1,10 +1,11 @@
 
+local automarket
 
 return {
   initialize = function(self)
     ---@type Module_UI
     local ui = modules.ui
-    ui:createMenuFromFile("ucp/modules/automarket/ui/automarket.lua")
+    automarket = ui:createMenuFromFile("ucp/modules/automarket/ui/automarket.lua", true, true)
   end,
 
   setCallbacks = function(self, callbacks)
@@ -15,10 +16,10 @@ return {
       callbacks.commitData()
     end)
 
-    ui:registerEventHandler("automarket/ui/data/set/pointer", function(key, obj) 
-      log(VERBOSE, string.format("received pointer: %X", obj))
-      callbacks.setPointer(obj)
-    end)
-    ui:sendEvent("automarket/ui/data/get/pointer", {})
+    log(VERBOSE, string.format("setCallbacks: received pointer: %X", automarket.pAutoMarketData))
+    callbacks.setPointer(automarket.pAutoMarketData)
+
+    log(VERBOSE, string.format("setCallbacks: setting hook to callback: %X", automarket.pCallback))
+    callbacks.allocateMarketProcess(automarket.pCallback)
   end,
 }

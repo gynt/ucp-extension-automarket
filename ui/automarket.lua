@@ -55,10 +55,6 @@ local automarketData = automarketDataArray[0]
 automarketData.header.version = 1
 local autoMarketPlayerDataStructs = automarketData.playerSettings
 local pAutoMarketData = tonumber(ffi.cast("unsigned long", automarketDataArray))
-remote.events.receive("automarket/ui/data/get/pointer", function(key, value)
-  log(VERBOSE, string.format("received: %s", key))
-  remote.events.send("automarket/ui/data/set/pointer", pAutoMarketData)
-end)
 
 local pCurrentlyHoveredGood = ffi.new("int[1]", {})
 local pLastSelectedGood = ffi.new("int[1]", {})
@@ -1109,7 +1105,56 @@ ModalMenu:createModalMenu({
   menu = menu,
 })
 
+local callback = registerObject(function()
+  for playerID=1,8 do
+    local isLordAlive = market.getAliveLordForPlayer(market.UnitsState, playerID) > 0
+    local hasMarket = market.marketBuildings[playerID][0] ~= 0
+    local am = autoMarketPlayerDataStructs[playerID]
+    local resources = market.playerResources[playerID]
+    
+    if isLordAlive and hasMarket and am.enabled then
+      -- selling
+      for _, good in ipairs(GOODS_DISPLAY_ORDER) do
+        local illegalSellValue = am.buyEnabled[good] and am.sellValues[good] <= am.buyValues[good]
+        if am.sellEnabled[good] and illegalSellValue == false then
+          local surplus = resources[good] - am.sellValues[good]
+          if surplus > 0 then
+            log(INFO, string.format("sold goods: %s (amount: %s)", good, surplus))
+            market.sellGoods(market.AICState, playerID, good, surplus)
+          end
+        end        
+      end
 
-remote.events.receive('ui-tests/test3/afterInit', function(key, value)
-  -- log(ERROR, string.format("%s", getText(textManager, 224, 7)))
+      -- buying
+      for _, good in ipairs(GOODS_DISPLAY_ORDER) do
+        local availableGold = resources[0xF] - am.goldReserve
+        if availableGold < 0 then
+          break
+        end
+        local illegalBuyValue = am.sellEnabled[good] and am.buyValues[good] >= am.sellValues[good]
+        if am.buyEnabled[good] and illegalBuyValue == false then
+          local shortage = am.buyValues[good] - resources[good]
+          if shortage > 0 then
+            local goldRequired = market.getBuyPrice(market.GameState, playerID, good, shortage)
+            if availableGold > goldRequired then
+              if not market.buyGoods(market.AICState, playerID, good, shortage) then
+                log(WARNING, string.format("failed to buy goods: %s (amount: %s, gold: %s)", good, shortage, goldRequired))
+              else
+                log(INFO, string.format("bought goods: %s (amount: %s, gold: %s)", good, shortage, goldRequired))
+              end
+            else
+              log(WARNING, string.format("failed to buy goods (not enough gold): %s (amount: %s, gold: %s, available: %s)", good, shortage, goldRequired, availableGold))
+            end
+          end
+        end
+      end
+    end
+  end
 end)
+
+local pCallback = registerObject(ffi.cast("void (__cdecl *)()", callback))
+
+return {
+  pAutoMarketData = pAutoMarketData,
+  pCallback = tonumber(ffi.cast("unsigned long", pCallback)),
+}
