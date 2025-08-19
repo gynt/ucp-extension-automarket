@@ -183,10 +183,14 @@ local renderCallback1 = function(param)
   ---@type ButtonRenderState
   local state = game.Rendering.ButtonState
 
-  local renderParam = param
-  if param == 7 then renderParam = 8 end
-
   if param < 25 then
+
+    local renderParam = param
+    if param == 7 then renderParam = 8 end
+
+    local playerID = market.pPlayerID[0]
+    local resources = market.playerResources[playerID]
+
     local gmID = (renderParam * 2) + 0x269 - 2
     
     local blendStrength = 6 -- * 2
@@ -228,6 +232,8 @@ local renderCallback1 = function(param)
     end
     game.Rendering.renderTextToScreen(textManager, sellTxt, state.x + GOODS_TEXT_START_X, state.y + 5 + 0x13, 0, 0xB8EEFB, 0x13, 0, 0)
 
+    local resourceTxt = string.format("%d", resources[param])
+    game.Rendering.renderTextToScreenConst(textManager, resourceTxt, state.x + 0, state.y + state.height - 4, 0, 0xB8EEFB, 0x13, 0, 0)
   elseif param == 27 then
     -- renderButtonGM()
     -- or manually:

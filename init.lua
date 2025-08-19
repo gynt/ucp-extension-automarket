@@ -81,9 +81,14 @@ function automarket:enable(config)
       local asm = core.AssemblyLambda([[
           cmp dword [pWeekChanged], 0
           je finish
-
+          push eax
+          push ecx
+          push edx
           call callback
-
+          pop edx
+          pop ecx
+          pop eax
+          
         finish:
           ; end of script
       ]], {
