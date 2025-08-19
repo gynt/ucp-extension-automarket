@@ -88,7 +88,7 @@ function automarket:enable(config)
           pop edx
           pop ecx
           pop eax
-          
+
         finish:
           ; end of script
       ]], {
@@ -96,7 +96,9 @@ function automarket:enable(config)
         callback = pointer,
       })
       -- 0045b4c0
-      core.insertCode(core.AOBScan("BF 01 00 00 00 8D B1 A4 47 03 00"), 5, {asm}, nil, "after")
+      local detourTarget = core.AOBScan("BF 01 00 00 00 8D B1 A4 47 03 00")
+      log(VERBOSE, string.format("allocateMarketProcess: inserting code at 0x%X pointing to 0x%X", detourTarget, pointer))
+      core.insertCode(detourTarget, 5, {asm}, nil, "after")
 
     end,
   })
