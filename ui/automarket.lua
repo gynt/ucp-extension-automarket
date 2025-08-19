@@ -1174,7 +1174,10 @@ end)
 
 local pCallback = registerObject(ffi.cast("void (__cdecl *)()", callback))
 
+local triggerItem = require("ucp/modules/automarket/ui/trigger")
+
 return {
   pAutoMarketData = pAutoMarketData,
   pCallback = tonumber(ffi.cast("unsigned long", pCallback)),
+  triggerItem = triggerItem,
 }

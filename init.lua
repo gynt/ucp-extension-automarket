@@ -55,13 +55,38 @@ local automarketProtocolHandler = {
   end
 }
 
+local automarketInterface = {
+  initialize = function(self)
+    ---@type Module_UI
+    local ui = modules.ui
+    self.automarket = ui:createMenuFromFile("ucp/modules/automarket/ui/automarket.lua", true, true)
+    -- self.automarket.triggerItem.menuItemRenderFunction.simple = ffi.cast("void (__cdecl *)(int)", self.automarket.triggerItem.menuItemRenderFunction.simple)
+    -- self.automarket.triggerItem.menuItemActionHandler.simple = ffi.cast("void (__cdecl *)(int)", self.automarket.triggerItem.menuItemActionHandler.simple)
+  end,
+
+  setCallbacks = function(self, callbacks)
+    ---@type Module_UI
+    local ui = modules.ui
+    ui:registerEventHandler("automarket/ui/data/save", function(key, obj)
+      log(VERBOSE, string.format("save called!"))
+      callbacks.commitData()
+    end)
+
+    log(VERBOSE, string.format("setCallbacks: received pointer: %X", self.automarket.pAutoMarketData))
+    callbacks.setPointer(self.automarket.pAutoMarketData)
+
+    log(VERBOSE, string.format("setCallbacks: setting hook to callback: %X", self.automarket.pCallback))
+    callbacks.allocateMarketProcess(self.automarket.pCallback)
+  end,
+}
+
 function automarket:enable(config)
 
   ---@type protocol
   local p = modules.protocol
   automarketProtocolNumber, automarketProtocolKey = p:registerCustomProtocol('automarket', 'commitSingle', 'LOCKSTEP', 4 + autoMarketDataSize, automarketProtocolHandler)
 
-  local automarketUI = require("ui")
+  local automarketUI = automarketInterface
   automarketUI:initialize()
   automarketUI:setCallbacks({
     setPointer = function(pointer)
@@ -102,6 +127,14 @@ function automarket:enable(config)
 
     end,
   })
+
+  hooks.registerHookCallback('afterInit', function()
+    log(VERBOSE, "setting trigger item")
+    local menu = modules.ui:access().api.ui.Menu:fromID(0x10)
+    menu:reallocateMenuItems()
+    -- TODO: fails:
+    -- menu:insertMenuItem(144, automarketUI.automarket.triggerItem)
+  end)
 
   local mapdatapath = "automarketplayerdata.bin"
 
