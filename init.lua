@@ -134,6 +134,8 @@ function automarket:enable(config)
     -- menu:reallocateMenuItems()
     -- TODO: fails:
     menu:insertMenuItem(144, automarketUI.automarket.triggerItem)
+    -- Since we do this post initialization of the menu, we have to adjust the tab panel items to skip value
+    menu.menuItems[138].firstItemTypeData.itemsToSkip = menu.menuItems[138].firstItemTypeData.itemsToSkip + 1
   end)
 
   local mapdatapath = "automarketplayerdata.bin"

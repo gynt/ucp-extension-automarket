@@ -6,8 +6,9 @@ local render = ffi.cast("void (__cdecl *)(int)", function(parameter)
   local state = game.Rendering.ButtonState
   -- game.Rendering.renderButtonBackground(game.Rendering.alphaAndButtonSurface, 0, -1)
   game.Rendering.pDrawBufferChoiceValue[0] = 0
-  game.Rendering.renderTextToScreenConst(game.Rendering.textManager, "Automarket", state.x - 10, state.y + 30, 0, 0xB8EEFB, 0x12, 0, 0)
+  game.Rendering.renderTextToScreenConst(game.Rendering.textManager, "Auto market", state.x - 14, state.y + 30, 0, 0xB8EEFB, 0x12, 0, 0)
   game.Rendering.renderGM(game.Rendering.textureRenderCore, 0x2E, 204, state.x, state.y)
+  state.gmPictureIndex = 204
   game.Rendering.pDrawBufferChoiceValue[0] = 1
 end)
 registerObject(render)
