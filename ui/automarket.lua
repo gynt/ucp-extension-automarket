@@ -1097,27 +1097,14 @@ ModalMenu:createModalMenu({
     game.Rendering.drawBlendedBlackBox(game.Rendering.pencilRenderCore, x+6, y+6, x + 600 - 6, y + 408-6, 0x14)
     game.Rendering.renderTextToScreenConst(game.Rendering.textManager, pAutomarketTitle, x + 20, y + 25, 0, 0xCCFAFF, 0xF, false, 0)
     
-    local txtIndex = defaultHelpTxtIndex
-    if menu.menu ~= nil and menu.menu.hoveredItem ~= nil then
-      ---@type MenuItem
-      local mi = menu.menu.hoveredItem[0]
-      local inferredParameter = mi.callbackParameter.parameter
-      if inferredParameter == 34 then
-        txtIndex = 2
-      elseif inferredParameter == 29 then
-        txtIndex = 5
-      elseif inferredParameter == 28 then
-        txtIndex = 6
-      elseif inferredParameter > 1 and inferredParameter < 25 then
-        txtIndex = 7
-        -- TODO: not working due to "hoveredItem" not working for sliders...
-      elseif inferredParameter == 30 then
-        txtIndex = 8
-      elseif inferredParameter == 31 then
-        txtIndex = 9
-      end
-    end
-    game.Rendering.renderTextToScreenConst(textManager, helpTxts[txtIndex], x + 15 + 4, y + 408 - 45 + 5 + 6, 0, 0xB8EEFB, 0x13, 0, 0)
+    game.Rendering.renderTextToScreenConst(textManager, "Save & Close", x + width - 150, y + height - 45 + 5 + 3, 0, 0xB8EEFB, 0x13, 0, 0)
+
+    local status, err = pcall(function()
+      local feeTxt = string.format("Market fee: %d", marketFee or 0) .. " %"
+      game.Rendering.renderTextToScreenConst(textManager, feeTxt, x + 30, y + height - 45 + 5 + 3, 0, 0xB8EEFB, 0x13, 0, 0)
+    end)
+    if status == false then log(ERROR, err) end
+    
   end,
   menu = menu,
 })

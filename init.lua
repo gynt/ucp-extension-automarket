@@ -131,9 +131,12 @@ function automarket:enable(config)
   hooks.registerHookCallback('afterInit', function()
     log(VERBOSE, "setting trigger item")
     local menu = modules.ui:access().api.ui.Menu:fromID(0x10)
+    _G[menu] = true
     -- menu:reallocateMenuItems()
     -- TODO: fails:
+    log(VERBOSE, string.format('inserting trigger button in market panel: %s', automarketUI.automarket.triggerItem))
     menu:insertMenuItem(144, automarketUI.automarket.triggerItem)
+    log(VERBOSE, 'updating items to skip')
     -- Since we do this post initialization of the menu, we have to adjust the tab panel items to skip value
     menu.menuItems[138].firstItemTypeData.itemsToSkip = menu.menuItems[138].firstItemTypeData.itemsToSkip + 1
   end)

@@ -34,10 +34,10 @@ local item =  {
     parameter = 0x35, -- mimick prices... can be anything
   },
   menuItemRenderFunction = {
-    simple = tonumber(ffi.cast("unsigned long", render)),
+    address = tonumber(ffi.cast("unsigned long", render)),
   },
   menuItemActionHandler = {
-    simple = tonumber(ffi.cast("unsigned long", action)),
+    address = tonumber(ffi.cast("unsigned long", action)),
   },
 }
 registerObject(item)
