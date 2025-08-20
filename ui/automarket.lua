@@ -71,8 +71,10 @@ local actionCallback1 = function(param)
     remote.events.send("automarket/ui/data/save", {
       enabled = autoMarketPlayerDataStructs[0].enabled,
     })
+    game.UI.activateModalMenu(game.UI.MenuModalComposition1, -1, false)
   elseif param == 29 then
     log(VERBOSE, "close clicked")
+    game.UI.activateModalMenu(game.UI.MenuModalComposition1, -1, false)
   end
 end
 
@@ -436,7 +438,7 @@ local sliderRenderFunction = function(parameter, thumbXPos, sliderValue, thumbWi
     
     local color = game.Rendering.Colors.pGreyishYellow[0]
     if isDragged then 
-      color = game.Rendering.Colors.pColorDarkLime[0]
+      color = game.Rendering.Colors.pDarkLime[0]
     end
 
     local good = chooseFocusGood()
@@ -460,7 +462,7 @@ local sliderRenderFunction = function(parameter, thumbXPos, sliderValue, thumbWi
     
     local color = game.Rendering.Colors.pGreyishYellow[0]
     if isDragged then 
-      color = game.Rendering.Colors.pColorDarkLime[0]
+      color = game.Rendering.Colors.pDarkLime[0]
     end
 
     game.Rendering.drawColorBox(game.Rendering.pencilRenderCore, thumbXPos + state.x + 1, state.y + 4, thumbXPos + state.x - 2 + thumbWidth, state.height - 8 + state.y, color)
@@ -802,6 +804,7 @@ local menuItems = {
   },
 
   -- Top right buttons
+  -- SAVE AND CLOSE
   {
     menuItemType = 0x02000003, -- Button in interaction group (bit flags)
     menuItemRenderFunctionType = 0x1,
@@ -817,6 +820,7 @@ local menuItems = {
       parameter = 28,
     },
   },
+  -- CLOSE
   {
     menuItemType = 0x02000003, -- Button in interaction group (bit flags)
     menuItemRenderFunctionType = 0x1,
@@ -832,6 +836,7 @@ local menuItems = {
       parameter = 29,
     },
   },
+  -- ENABLE BUTTON
   {
     menuItemType = 0x02000003, -- Button in interaction group (bit flags)
     menuItemRenderFunctionType = 0x1,

@@ -13,20 +13,9 @@ local render = ffi.cast("void (__cdecl *)(int)", function(parameter)
 end)
 registerObject(render)
 
-local activateModalDialog = ffi.cast([[
-  void (__thiscall *)(
-    void * this, // MenuModalComposition
-    int menuModalID,
-    bool retainOther
-  )
-]], core.AOBScan("53 55 33 ED 39 6C 24 10"))
-
-local _, pMenuModalComposition1 = utils.AOBExtract("B9 I( ? ? ? ? ) E8 ? ? ? ? 5E 5B E9 ? ? ? ?")
-local MenuModalComposition1 = ffi.cast("void *", pMenuModalComposition1)
-
 local action = ffi.cast("void (__cdecl *)(int)", function(parameter)
-  log(VERBOSE, "wow!")
-  activateModalDialog(MenuModalComposition1, 2025, false)
+  log(VERBOSE, "trigger automarket window")
+  game.UI.activateModalMenu(game.UI.MenuModalComposition1, 2025, false)
 end)
 registerObject(action)
 
@@ -42,7 +31,7 @@ local item =  {
   itemWidth = 50,
   itemHeight = 30,
   callbackParameter = {
-    parameter = 0x35, -- mimick prices...
+    parameter = 0x35, -- mimick prices... can be anything
   },
   menuItemRenderFunction = {
     simple = tonumber(ffi.cast("unsigned long", render)),
