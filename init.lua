@@ -60,8 +60,8 @@ local automarketInterface = {
     ---@type Module_UI
     local ui = modules.ui
     self.automarket = ui:createMenuFromFile("ucp/modules/automarket/ui/automarket.lua", true, true)
-    -- self.automarket.triggerItem.menuItemRenderFunction.simple = ffi.cast("void (__cdecl *)(int)", self.automarket.triggerItem.menuItemRenderFunction.simple)
-    -- self.automarket.triggerItem.menuItemActionHandler.simple = ffi.cast("void (__cdecl *)(int)", self.automarket.triggerItem.menuItemActionHandler.simple)
+    self.automarket.triggerItem.menuItemRenderFunction.simple = ffi.cast("void (__cdecl *)(int)", self.automarket.triggerItem.menuItemRenderFunction.simple)
+    self.automarket.triggerItem.menuItemActionHandler.simple = ffi.cast("void (__cdecl *)(int)", self.automarket.triggerItem.menuItemActionHandler.simple)
   end,
 
   setCallbacks = function(self, callbacks)
@@ -90,12 +90,12 @@ function automarket:enable(config)
   automarketUI:initialize()
   automarketUI:setCallbacks({
     setPointer = function(pointer)
-        self.automarketData = ffi.cast("AutoMarketData *", pointer)
-        self.pAutomarketData = pointer
-        automarketData = self.automarketData
-        pAutomarketData = self.pAutomarketData
-        pAutomarketPlayerSettings = ffi.tonumber(ffi.cast("unsigned long", self.automarketData.playerSettings))
-        if pAutomarketPlayerSettings == nil then error("pAutomarketPlayerSettings is nil!") end
+      self.automarketData = ffi.cast("AutoMarketData *", pointer)
+      self.pAutomarketData = pointer
+      automarketData = self.automarketData
+      pAutomarketData = self.pAutomarketData
+      pAutomarketPlayerSettings = ffi.tonumber(ffi.cast("unsigned long", self.automarketData.playerSettings))
+      if pAutomarketPlayerSettings == nil then error("pAutomarketPlayerSettings is nil!") end
     end,
     commitData = function()
       log(WARNING, "do the commit!")
@@ -131,9 +131,9 @@ function automarket:enable(config)
   hooks.registerHookCallback('afterInit', function()
     log(VERBOSE, "setting trigger item")
     local menu = modules.ui:access().api.ui.Menu:fromID(0x10)
-    menu:reallocateMenuItems()
+    -- menu:reallocateMenuItems()
     -- TODO: fails:
-    -- menu:insertMenuItem(144, automarketUI.automarket.triggerItem)
+    menu:insertMenuItem(144, automarketUI.automarket.triggerItem)
   end)
 
   local mapdatapath = "automarketplayerdata.bin"
