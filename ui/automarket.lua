@@ -78,29 +78,56 @@ local actionCallback1 = function(param)
   end
 end
 
+-- local GOODS_DISPLAY_ORDER = {
+--   2,
+--   3,
+--   4,
+--   6,
+--   7,
+--   9,
+--   24,
+
+--   16,
+--   10,
+--   11,
+--   12,
+--   13,
+--   14,
+--   23,
+
+--   17,
+--   18,
+--   19,
+--   20,
+--   21,
+--   22,
+-- }
+
+--- heroes order :)
 local GOODS_DISPLAY_ORDER = {
   2,
-  3,
   4,
   6,
   7,
-  9,
-  24,
-
-  16,
-  10,
-  11,
-  12,
-  13,
-  14,
-  23,
-
-  17,
-  18,
-  19,
-  20,
   21,
   22,
+  24,
+  
+  9,
+  3,
+  14,
+  16,
+  23,
+  19,
+  20,
+
+  12,
+  13,
+  11,
+  10,
+  17,
+  18,
+  
 }
 
 local GOODS_OFFSETS = ffi.new("IntegerPoint[25]", {})
@@ -179,7 +206,7 @@ local GOODS_BUTTON_WIDTH = GOODS_BUTTON_BASE_SIZE + GOODS_TEXT_SIZE + GOODS_MARG
 local GOODS_BUTTON_HEIGHT = GOODS_BUTTON_BASE_SIZE
 local GOODS_TEXT_START_X = GOODS_BUTTON_BASE_SIZE + GOODS_TEXT_MARGIN
 local GOODS_HORIZONTAL_SPACING = (GOODS_BUTTON_WIDTH)
-local GOODS_VERTICAL_SPACING = (GOODS_BUTTON_HEIGHT + 5)
+local GOODS_VERTICAL_SPACING = (GOODS_BUTTON_HEIGHT + 10)
 
 local renderCallback1 = function(param)
   ---@type ButtonRenderState
@@ -842,11 +869,13 @@ local menuItems = {
     menuItemRenderFunctionType = 0x1,
     position = {
       position = {
-        x = 600 - 10 - 35 - 35 - 155,
-        y = 15,
+        -- x = 600 - 10 - 35 - 35 - 155,
+        x = 250,
+        -- y = 15,
+        y = 20 + 15,
       }
     },
-    itemWidth = 150,
+    itemWidth = 50,
     itemHeight = 30,
     callbackParameter = {
       parameter = 26,
@@ -882,7 +911,7 @@ local menuItems = {
     menuItemRenderFunctionType = 0x1,
     position = {
       position = {
-        x = 600 - 50 - 15 - 256 - 5 - 140 - 50,
+        x = 600 - 50 - 15 - 256 - 5 - 140 - 50 + 25,
         y = SLIDER_ROW_Y,
       }
     },
@@ -915,6 +944,9 @@ local menuItems = {
           ---TODO: add current player logic to get the right resources...
           local txt = string.format("%d", market.playerResources[market.pPlayerID[0]][good])
           game.Rendering.renderTextToScreenConst(game.Rendering.textManager, txt, state.x + 15 + 20, state.y + 8 + 40, 1, 0xB8EEFB, 0x12, 0, 0) 
+        else
+          game.Rendering.renderTextToScreenConst(game.Rendering.textManager, "Select", state.x + 6, state.y + 6, 0, 0xB8EEFB, 0x13, 0, 0)
+          game.Rendering.renderTextToScreenConst(game.Rendering.textManager, "goods", state.x + 6, state.y + 6 + 0x13, 0, 0xB8EEFB, 0x13, 0, 0)
         end
       end),
     },
@@ -934,7 +966,7 @@ local menuItems = {
     menuItemRenderFunctionType = 0x4, -- Slider
     position = {
       position = {
-        x = 600 - 50 - 15 - 256 - 10,
+        x = 600 - 50 - 15 - 256 - 10 + 25,
         y = SLIDER_ROW_Y,
       }
     },
@@ -993,7 +1025,7 @@ local menuItems = {
     menuItemRenderFunctionType = 0x4, -- Slider
     position = {
       position = {
-        x = 600 - 50 - 15 - 256 - 10,
+        x = 600 - 50 - 15 - 256 - 10 + 25,
         y = SLIDER_ROW_Y + 30 + 5,
       }
     },
