@@ -20,6 +20,7 @@ end)
 registerObject(action)
 
 local item =  {
+  -- TODO: this menuItemType isn't proper, it should have the "tab" flag too
   menuItemType = 0x02000003, -- Button in interaction group (bit flags)
   menuItemRenderFunctionType = 0x1,
   position = {

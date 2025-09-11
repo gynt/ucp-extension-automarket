@@ -1109,8 +1109,6 @@ local menuItems = {
 
 menu = api.ui.Menu:createMenu({
   menuID = 2024,
-  -- menuItemsCount = 10,
-  -- TODO: Without jit being on, this will crash because menuItems pointer becomes 0
   menuItems = ffi.new(string.format("MenuItem[%s]", #menuItems), menuItems)
 })
 

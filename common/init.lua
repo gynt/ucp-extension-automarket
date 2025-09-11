@@ -35,10 +35,19 @@ typedef struct AutoMarketData {
 
   ]])
 
+  -- 260
   sizes["AutoMarketPlayerData"] = ffi.sizeof("AutoMarketPlayerData")
+  -- 100
   sizes["AutoMarketPlayerCredit"] = ffi.sizeof("AutoMarketPlayerCredit")
+  -- 3244
   sizes["AutoMarketData"] = ffi.sizeof("AutoMarketData")
+
+  -- 4
   sizes["AutoMarketDataHeader"] = ffi.sizeof("AutoMarketDataHeader")
+
+  for k, v in pairs(sizes) do
+    log(VERBOSE, string.format("sizeof: %s = %d", k, v))
+  end
 end
 
 return {

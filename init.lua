@@ -60,8 +60,9 @@ local automarketInterface = {
     ---@type Module_UI
     local ui = modules.ui
     self.automarket = ui:createMenuFromFile("ucp/modules/automarket/ui/automarket.lua", true, true)
-    self.automarket.triggerItem.menuItemRenderFunction.simple = ffi.cast("void (__cdecl *)(int)", self.automarket.triggerItem.menuItemRenderFunction.simple)
-    self.automarket.triggerItem.menuItemActionHandler.simple = ffi.cast("void (__cdecl *)(int)", self.automarket.triggerItem.menuItemActionHandler.simple)
+    -- unnecessary cast?
+    -- self.automarket.triggerItem.menuItemRenderFunction.simple = ffi.cast("void (__cdecl *)(int)", self.automarket.triggerItem.menuItemRenderFunction.simple)
+    -- self.automarket.triggerItem.menuItemActionHandler.simple = ffi.cast("void (__cdecl *)(int)", self.automarket.triggerItem.menuItemActionHandler.simple)
   end,
 
   setCallbacks = function(self, callbacks)
@@ -131,6 +132,10 @@ function automarket:enable(config)
   hooks.registerHookCallback('afterInit', function()
     log(VERBOSE, "setting trigger item")
     local menu = modules.ui:access().api.ui.Menu:fromID(0x10)
+    -- log(VERBOSE, "loading ui access")
+    -- local access = modules.ui:access()
+    -- log(VERBOSE, "getting Menu handle from ID 0x10")
+    -- local menu = access.api.ui.Menu:fromID(0x10)
     _G[menu] = true
     -- menu:reallocateMenuItems()
     -- TODO: fails:
