@@ -891,7 +891,7 @@ local menuItems = {
         if autoMarketPlayerDataStructs[0].enabled then
           txt = "On"
         end
-        game.Rendering.renderTextToScreenConst(game.Rendering.textManager, txt, state.x + 6, state.y + 6, 0, 0xB8EEFB, 0x12, 0, 0)
+        game.Rendering.renderTextToScreenConst(game.Rendering.textManager, txt, state.x + 6 + 4, state.y + 6, 0, 0xB8EEFB, 0x12, 0, 0)
       end),
     },
     menuItemActionHandler = {
@@ -911,7 +911,7 @@ local menuItems = {
     menuItemRenderFunctionType = 0x1,
     position = {
       position = {
-        x = 600 - 50 - 15 - 256 - 5 - 140 - 50 + 25,
+        x = 600 - 50 - 15 - 25 - 256 - 5 - 140 - 50 + 25,
         y = SLIDER_ROW_Y,
       }
     },
@@ -966,7 +966,7 @@ local menuItems = {
     menuItemRenderFunctionType = 0x4, -- Slider
     position = {
       position = {
-        x = 600 - 50 - 15 - 256 - 10 + 25,
+        x = 600 - 50 - 25 - 15 - 256 - 10 + 25,
         y = SLIDER_ROW_Y,
       }
     },
@@ -1025,7 +1025,7 @@ local menuItems = {
     menuItemRenderFunctionType = 0x4, -- Slider
     position = {
       position = {
-        x = 600 - 50 - 15 - 256 - 10 + 25,
+        x = 600 - 50 - 25 - 15 - 256 - 10 + 25,
         y = SLIDER_ROW_Y + 30 + 5,
       }
     },
