@@ -150,6 +150,14 @@ function automarket:enable(config)
 
   ---@type SerializationCallbacks
   local callbacks = {
+
+    initialize = function(self)
+      log(DEBUG, "wiping automarket data because none was found")
+      -- todo: improve by setting a default setting for everyone
+      -- wipe memory except the version information
+      core.setMemory(pAutomarketData + common.sizes.AutoMarketDataHeader, 0, autoMarketDataSize - common.sizes.AutoMarketDataHeader)
+    end,
+
     ---@param handle WriteHandle
     serialize = function(self, handle)
       handle:put(mapdatapath, core.readString(pAutomarketData, autoMarketDataSize))
@@ -183,7 +191,7 @@ function automarket:enable(config)
         end
 
         if success then
-          log(INFO, string.format("writing automarket data from map file (length: %d) to %X", data:len(), pAutomarketData))
+          log(VERBOSE, string.format("writing automarket data from map file (length: %d) to %X", data:len(), pAutomarketData))
           
           -- This nonsense is here due to a bug in RPS (or UCP?) with core.writeString
           local bytes = table.pack(string.byte(data, 1, -1))
@@ -195,7 +203,7 @@ function automarket:enable(config)
           --   end
           -- end
 
-          log(INFO, string.format("bytes data size: %d", #bytes))
+          log(VERBOSE, string.format("bytes data size: %d", #bytes))
           
           local v = automarketData.header.version
           core.writeBytes(pAutomarketData, bytes)

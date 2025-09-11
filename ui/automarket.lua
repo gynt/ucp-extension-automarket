@@ -1154,11 +1154,11 @@ local callback = registerObject(function()
           if illegalSellValue == false then
             local surplus = resources[good] - am.sellValues[good]
             if surplus > 0 then
-              log(INFO, string.format("sold goods: %s (amount: %s)", good, surplus))
+              log(VERBOSE, string.format("sold goods: %s (amount: %s)", good, surplus))
               market.sellGoods(market.AICState, playerID, good, surplus)
             end
           else
-            log(INFO, string.format("illegal sell value for good: %s (sell: %s, buy: %s)", good, am.sellValues[good], am.buyValues[good]))
+            log(WARNING, string.format("illegal sell value for good: %s (sell: %s, buy: %s)", good, am.sellValues[good], am.buyValues[good]))
           end
         end        
       end
@@ -1179,7 +1179,7 @@ local callback = registerObject(function()
                 if not market.buyGoods(market.AICState, playerID, good, shortage) then
                   log(WARNING, string.format("failed to buy goods: %s (amount: %s, gold: %s)", good, shortage, goldRequired))
                 else
-                  log(INFO, string.format("bought goods: %s (amount: %s, gold: %s)", good, shortage, goldRequired))
+                  log(VERBOSE, string.format("bought goods: %s (amount: %s, gold: %s)", good, shortage, goldRequired))
                 end
               else
                 log(WARNING, string.format("failed to buy goods (not enough gold): %s (amount: %s, gold: %s, available: %s)", good, shortage, goldRequired, availableGold))
