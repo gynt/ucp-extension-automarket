@@ -33,15 +33,15 @@ local sellGoods = ffi.cast([[
 
 local _, pGameState = utils.AOBExtract("B9 I( ? ? ? ? ) E8 ? ? ? ? 8B F3 69 F6 F4 39 00 00 8B ? ? ? ? ? 8B ? ? ? ? ?")
 local GameState = ffi.cast("void *", pGameState)
-local _pPlayerDataArray = pGameState + 0x30d40
-local _pResources0 = _pPlayerDataArray + 0x4d0
+local _, _pPlayerDataArray = utils.AOBExtract("81 ? I(? ? ? ?) 68 F4 39 00 00")
+local _, _pResources0 = utils.AOBExtract("89 ? ? I(? ? ? ?) 83 C0 01 83 F8 19")
 
 local _pResources = ffi.new("int*[9]")
 for i=0, 8 do
   _pResources[i] = ffi.cast("int*", _pResources0 + (i * 0x39f4))
 end
 
-local _pMarketBuildingID = _pPlayerDataArray + 0x1ac
+local _, _pMarketBuildingID = utils.AOBExtract("83 ? I(? ? ? ?) ? B8 01 00 00 00 75 16 ")
 local _pMarketBuildings = ffi.new("int*[9]")
 for i=0, 8 do
   _pMarketBuildings[i] = ffi.cast("int*", _pMarketBuildingID + (i * 0x39f4))
@@ -50,7 +50,7 @@ end
 
 local _, pGameSynchronyState = utils.AOBExtract("C7 ? I( ? ? ? ? ) ? ? ? ? FF D7")
 
-local pGetBuyPrice = core.AOBScan("8B 44 24 08 8B 8C C1 1C 1F 05 00")
+local _, pGetBuyPrice = utils.AOBExtract("@(E8 ? ? ? ?) 39 ? ? ? ? ? 8B 4C 24 10 ") -- core.AOBScan("8B 44 24 08 8B 8C C1 1C 1F 05 00")
 
 ---@type fun(gameState, playerID, resourceType, amount):integer
 local getBuyPrice = ffi.cast([[
@@ -71,11 +71,13 @@ local getAliveLordForPlayer = ffi.cast([[
   )
 ]], core.AOBScan("8B 11 B8 01 00 00 00 3B D0 55"))
 
+local _, pCurrentPlayer = utils.AOBExtract("A1 I(? ? ? ?) 53 55 56 8B E9")
+
 return {
   buyGoods = buyGoods,
   sellGoods = sellGoods,
   playerResources = _pResources,
-  pPlayerID = ffi.cast("int *", pGameSynchronyState + 0x109e74),
+  pPlayerID = ffi.cast("int *", pCurrentPlayer),
   AICState = AICState,
   getBuyPrice = getBuyPrice,
   GameState = GameState,
