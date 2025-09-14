@@ -5,14 +5,17 @@ else
   utils = remote.interface.utils
 end
 
-local _, pGameSynchronyState = utils.AOBExtract("C7 ? I( ? ? ? ? ) ? ? ? ? FF D7")
-local pPlayerID = ffi.cast("int *", pGameSynchronyState + 0x109e74)
+-- TODO: make this extreme compatible
+-- local _, pGameSynchronyState = utils.AOBExtract("C7 ? I( ? ? ? ? ) ? ? ? ? FF D7")
+local _, pPlayerID = utils.AOBExtract("A1 I(? ? ? ?) 53 55 56 8B E9")
 
-local pProtocolInvokerPlayerID = ffi.cast("int *", pGameSynchronyState + 0x109e70)
+local _, pInvoker = utils.AOBExtract("A1 I(? ? ? ?) 8D 48 FF 83 F9 07 77 0D")
 
-local _, pGameState = utils.AOBExtract("B9 I( ? ? ? ? ) E8 ? ? ? ? 8B F3 69 F6 F4 39 00 00 8B ? ? ? ? ? 8B ? ? ? ? ?")
-local pMapAndTime = pGameState + 0x516d4
-local pWeekChanged = pMapAndTime + 0x340
+local pProtocolInvokerPlayerID = ffi.cast("int *", pInvoker)
+
+-- TODO: make this extreme compatible
+-- local _, pGameState = utils.AOBExtract("B9 I( ? ? ? ? ) E8 ? ? ? ? 8B F3 69 F6 F4 39 00 00 8B ? ? ? ? ? 8B ? ? ? ? ?")
+local _, pWeekChanged = utils.AOBExtract("89 9E I(? ? ? ?) 89 9E ? ? ? ? 89 9E ? ? ? ? 89 9E ? ? ? ? 75 0c 89 BE ? ? ? ? 89 9E ? ? ? ?")
 
 return {
   pPlayerID = pPlayerID,
