@@ -26,7 +26,7 @@ local textManager = game.Rendering.textManager
 
 local AUTOMARKET_MODAL_MENU_ID = 2025
 local AUTOMARKET_TITLE = "Auto market"
-local pAutomarketTitle = registerObject(ffi.new("char[?]", #AUTOMARKET_TITLE + 1))
+local pAutomarketTitle = registerObject(ffi.new("char[?]", AUTOMARKET_TITLE:len() + 1))
 ffi.copy(pAutomarketTitle, AUTOMARKET_TITLE)
 
 --TODO: half implemented
@@ -49,7 +49,13 @@ local helpTxts = {
 
 log(DEBUG, AUTOMARKET_TITLE, pAutomarketTitle)
 
-local automarketDataArray = ffi.new("AutoMarketData[1]", {})
+log(DEBUG, string.format("pAutomarketDataArray: allocating size: 0x%X", common.sizes.AutoMarketData))
+-- allocate permanently
+local pAutoMarketDataArray = core.allocate(common.sizes.AutoMarketData)
+log(DEBUG, pAutoMarketDataArray)
+log(DEBUG, string.format)
+log(DEBUG, string.format("pAutomarketDataArray: 0x%x", tonumber(pAutoMarketDataArray)))
+local automarketDataArray = ffi.cast("AutoMarketData*", pAutoMarketDataArray)
 registerObject(automarketDataArray)
 local automarketData = automarketDataArray[0]
 automarketData.header.version = 1

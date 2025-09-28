@@ -60,6 +60,7 @@ local automarketInterface = {
     ---@type Module_UI
     local ui = modules.ui
     self.automarket = ui:createMenuFromFile("ucp/modules/automarket/ui/automarket.lua", true, true)
+    if type(self.automarket) == "number" then error("automarket failed to load") end
     -- unnecessary cast?
     -- self.automarket.triggerItem.menuItemRenderFunction.simple = ffi.cast("void (__cdecl *)(int)", self.automarket.triggerItem.menuItemRenderFunction.simple)
     -- self.automarket.triggerItem.menuItemActionHandler.simple = ffi.cast("void (__cdecl *)(int)", self.automarket.triggerItem.menuItemActionHandler.simple)
@@ -152,10 +153,15 @@ function automarket:enable(config)
   local callbacks = {
 
     initialize = function(self)
-      log(DEBUG, "wiping automarket data because none was found")
+      local pAutoMarketData = automarketUI.automarket.pAutoMarketData
+      local offset = pAutoMarketData + common.sizes.AutoMarketDataHeader
+      
       -- todo: improve by setting a default setting for everyone
       -- wipe memory except the version information
-      core.setMemory(pAutomarketData + common.sizes.AutoMarketDataHeader, 0, autoMarketDataSize - common.sizes.AutoMarketDataHeader)
+      local len = autoMarketDataSize - common.sizes.AutoMarketDataHeader
+      log(DEBUG, string.format("wiping automarket data because none was found: 0x%X (len: %d)", offset, len))
+      core.setMemory(offset, 0, len)
+      log(DEBUG, string.format("wiped"))
     end,
 
     ---@param handle WriteHandle
