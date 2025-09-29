@@ -6,6 +6,57 @@
 local core = remote.interface.core
 local utils = remote.interface.utils
 
+local SETTINGS = {
+  ui = {
+    buySellSliders = {
+      scrollWheel = {
+        invert = false,
+      }
+    }
+  },
+  logic = {
+    marketFee = {
+      enabled = false,
+      value = 0,
+    }
+  }
+}
+
+remote.events.receive('automarket/config/update', function(key, obj)
+  log(DEBUG, string.format("received event: config/update"))
+  local effect = false
+  if obj then
+    if obj.ui then
+      if obj.ui.buySellSliders then
+        if obj.ui.buySellSliders.scrollWheel then
+          if obj.ui.buySellSliders.scrollWheel.invert ~= nil then
+            log(DEBUG, string.format("ui.buySellSliders.scrollWheel.invert: %s", obj.ui.buySellSliders.scrollWheel.invert))
+            SETTINGS.ui.buySellSliders.scrollWheel.invert = obj.ui.buySellSliders.scrollWheel.invert
+            effect = true
+          end
+        end
+      end
+    end
+    if obj.logic then
+      if obj.logic.marketFee then
+        if obj.logic.marketFee.enabled ~= nil then
+          log(DEBUG, string.format("logic.marketFee.enabled: %s", obj.logic.marketFee.enabled))
+          SETTINGS.logic.marketFee.enabled = obj.logic.marketFee.enabled
+          effect = true
+        end
+        if obj.logic.marketFee.sliderValue ~= nil then
+          log(DEBUG, string.format("logic.marketFee.value: %s", obj.logic.marketFee.sliderValue))
+          SETTINGS.logic.marketFee.value = obj.logic.marketFee.sliderValue
+          effect = true
+        end
+      end
+    end
+  end
+  if effect == false then 
+    log(WARNING, string.format("config/update had no effect: %s", json:encode(obj)))
+  end
+end)
+
 local market = require("ucp/modules/automarket/ui/market")
 
 
@@ -56,8 +107,6 @@ log(DEBUG, AUTOMARKET_TITLE, pAutomarketTitle)
 log(DEBUG, string.format("pAutomarketDataArray: allocating size: 0x%X", common.sizes.AutoMarketData))
 -- allocate permanently
 local pAutoMarketDataArray = core.allocate(common.sizes.AutoMarketData)
-log(DEBUG, pAutoMarketDataArray)
-log(DEBUG, string.format)
 log(DEBUG, string.format("pAutomarketDataArray: 0x%x", tonumber(pAutoMarketDataArray)))
 local automarketDataArray = ffi.cast("AutoMarketData*", pAutoMarketDataArray)
 registerObject(automarketDataArray)
@@ -359,7 +408,7 @@ local sliderActionHandler = function(parameter, event, pMinValue, pMaxValue, pCu
       pMinValue[0] = GOODS_SLIDER_MIN
       pMaxValue[0] = GOODS_SLIDER_MAX
       pCurrentValue[0] = pValues[good]
-    elseif event == 5 then
+    elseif (not SETTINGS.ui.buySellSliders.scrollWheel.invert and event == 5) or(SETTINGS.ui.buySellSliders.scrollWheel.invert and event == 6) then
       -- scroll up
       if good == 0 then return end
       local isInside = game.Input.isMouseInsideBox(game.Input.mouseState, state.x, state.y, state.width, state.height)
@@ -372,7 +421,7 @@ local sliderActionHandler = function(parameter, event, pMinValue, pMaxValue, pCu
         end
       end
       
-    elseif event == 6 then
+    elseif (not SETTINGS.ui.buySellSliders.scrollWheel.invert and event == 6) or(SETTINGS.ui.buySellSliders.scrollWheel.invert and event == 5) then
       -- scroll down
 
       if good == 0 then return end
@@ -1140,7 +1189,11 @@ ModalMenu:createModalMenu({
     game.Rendering.renderTextToScreenConst(textManager, "Save & Close", x + width - 150, y + height - 45 + 5 + 3, 0, 0xB8EEFB, 0x13, 0, 0)
 
     local status, err = pcall(function()
-      local feeTxt = string.format("Market fee: %d", marketFee or 0) .. " %"
+      local feeTxt = string.format("Market fee: %d", 0) .. " %"
+      if SETTINGS.logic.marketFee.enabled == true then
+        feeTxt = string.format("Market fee: %d", SETTINGS.logic.marketFee.value) .. " %"
+      end
+      
       game.Rendering.renderTextToScreenConst(textManager, feeTxt, x + 30, y + height - 45 + 5 + 3, 0, 0xB8EEFB, 0x13, 0, 0)
     end)
     if status == false then log(ERROR, err) end

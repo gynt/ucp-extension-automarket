@@ -1,0 +1,31 @@
+meta:
+  version: 1.0.0
+options:
+  - url: automarket.ui.buySellSliders.scrollWheel.invert
+    header: "Invert scroll wheel to control the buy sell sliders in the Automarket UI"
+    text: "When inverted, scrolling away from you means increasing the value"
+    hasHeader: true
+    display: UCP2Switch
+    category:
+      - Automarket
+      - UI
+    contents:
+      type: boolean
+      value: false
+  - url: automarket.logic.marketFee
+    header: "Market Fee percentage"
+    text: "If not zero, buy expenses go up by this percentage and sale income goes down with this percentage for goods traded with the Automarket."
+    hasHeader: true
+    enabled: false
+    display: UCP2Slider
+    category:
+      - Automarket
+      - Market Fee
+    contents:
+      min: 0
+      max: 100
+      step: 1
+      decimals: 0
+      value:
+        enabled: false
+        sliderValue: 10

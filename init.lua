@@ -90,6 +90,9 @@ function automarket:enable(config)
 
   local automarketUI = automarketInterface
   automarketUI:initialize()
+  ---@type Module_UI
+  local ui = modules.ui
+  ui:sendEvent("automarket/config/update", config)
   automarketUI:setCallbacks({
     setPointer = function(pointer)
       self.automarketData = ffi.cast("AutoMarketData *", pointer)
