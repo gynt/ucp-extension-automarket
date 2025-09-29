@@ -58,7 +58,7 @@ remote.events.receive('automarket/config/update', function(key, obj)
 end)
 
 local market = require("ucp/modules/automarket/ui/market")
-
+local feeLogic = require("ucp/modules/automarket/ui/market/fees")
 
 local common = require("ucp/modules/automarket/common")
 common.loadHeaders()
@@ -1189,9 +1189,9 @@ ModalMenu:createModalMenu({
     game.Rendering.renderTextToScreenConst(textManager, "Save & Close", x + width - 150, y + height - 45 + 5 + 3, 0, 0xB8EEFB, 0x13, 0, 0)
 
     local status, err = pcall(function()
-      local feeTxt = string.format("Market fee: %d", 0) .. " %"
+      local feeTxt = string.format("Market fee:   %d", 0) .. " %"
       if SETTINGS.logic.marketFee.enabled == true then
-        feeTxt = string.format("Market fee: %d", SETTINGS.logic.marketFee.value) .. " %"
+        feeTxt = string.format("Market fee:   %d", SETTINGS.logic.marketFee.value) .. " %"
       end
       
       game.Rendering.renderTextToScreenConst(textManager, feeTxt, x + 30, y + height - 45 + 5 + 3, 0, 0xB8EEFB, 0x13, 0, 0)
@@ -1203,58 +1203,110 @@ ModalMenu:createModalMenu({
 })
 
 local callback = registerObject(function()
-  for playerID=1,8 do
-    local isLordAlive = market.getAliveLordForPlayer(market.UnitsState, playerID) > 0
-    local hasMarket = market.marketBuildings[playerID][0] ~= 0
-    local am = autoMarketPlayerDataStructs[playerID]
-    local resources = market.playerResources[playerID]
-    
-    if isLordAlive and hasMarket and am.enabled then
-      -- selling
-      for _, good in ipairs(GOODS_DISPLAY_ORDER) do
-        local illegalSellValue = am.buyEnabled[good] and (am.sellValues[good] <= am.buyValues[good])
-        if am.sellEnabled[good] then
-          if illegalSellValue == false then
-            local surplus = resources[good] - am.sellValues[good]
-            if surplus > 0 then
-              log(VERBOSE, string.format("sold goods: %s (amount: %s)", good, surplus))
-              market.sellGoods(market.AICState, playerID, good, surplus)
-            end
-          else
-            log(WARNING, string.format("illegal sell value for good: %s (sell: %s, buy: %s)", good, am.sellValues[good], am.buyValues[good]))
-          end
-        end        
-      end
+  local status, err = pcall(function() 
+    for playerID=1,8 do
+      local isLordAlive = market.getAliveLordForPlayer(market.UnitsState, playerID) > 0
+      local hasMarket = market.marketBuildings[playerID][0] ~= 0
+      local am = autoMarketPlayerDataStructs[playerID]
+      local resources = market.playerResources[playerID]
+      
+      if isLordAlive and hasMarket and am.enabled then
+        -- selling
+        for _, good in ipairs(GOODS_DISPLAY_ORDER) do
+          local illegalSellValue = am.buyEnabled[good] and (am.sellValues[good] <= am.buyValues[good])
+          if am.sellEnabled[good] then
+            if illegalSellValue == false then
+              local surplus = resources[good] - am.sellValues[good]
+              if surplus > 0 then
+                -- Calculate the gold the game would hand out
+                local gameReward = market.getSellPrice(market.GameState, playerID, good, surplus)
+                local reward = gameReward
+                local credit
+                local extraGold = false
+                local playerCredit = automarketData.playerCredit[playerID].credit
+                if SETTINGS.logic.marketFee.enabled == true and SETTINGS.logic.marketFee.value > 0 and SETTINGS.logic.marketFee.value <= 100 then
+                  reward, credit = feeLogic.calculateFeedReward(gameReward, SETTINGS.logic.marketFee.value)
+                  
+                  playerCredit = playerCredit + credit
+                  if playerCredit > 100 then
+                    extraGold = true
 
-      -- buying
-      for _, good in ipairs(GOODS_DISPLAY_ORDER) do
-        local availableGold = resources[0xF] - am.goldReserve
-        if availableGold < 0 then
-          break
-        end
-        local illegalBuyValue = am.sellEnabled[good] and (am.buyValues[good] >= am.sellValues[good])
-        if am.buyEnabled[good] then
-          if illegalBuyValue == false then
-            local shortage = am.buyValues[good] - resources[good]
-            if shortage > 0 then
-              local goldRequired = market.getBuyPrice(market.GameState, playerID, good, shortage)
-              if availableGold > goldRequired then
-                if not market.buyGoods(market.AICState, playerID, good, shortage) then
-                  log(WARNING, string.format("failed to buy goods: %s (amount: %s, gold: %s)", good, shortage, goldRequired))
-                else
-                  log(VERBOSE, string.format("bought goods: %s (amount: %s, gold: %s)", good, shortage, goldRequired))
+                    playerCredit = playerCredit - 100
+                  end
+                  automarketData.playerCredit[playerID].credit = playerCredit
                 end
-              else
-                log(WARNING, string.format("failed to buy goods (not enough gold): %s (amount: %s, gold: %s, available: %s)", good, shortage, goldRequired, availableGold))
+                local oldGold = resources[0xF]
+                market.sellGoods(market.AICState, playerID, good, surplus)
+                -- game handed out too much gold
+                resources[0xF] = resources[0xF] - (gameReward - reward)
+                if extraGold == true then
+                  resources[0xF] = resources[0xF] + 1
+                end
+                local newGold = resources[0xF]
+                log(VERBOSE, string.format("sold goods: %s (amount: %s, raw reward: %s, feed reward: %s, old gold: %s, new gold: %s, credit: %s, credit payout: %s)", good, surplus, gameReward, reward, oldGold, newGold, playerCredit, extraGold))
+
+                -- imagine reward: 
               end
+            else
+              log(WARNING, string.format("illegal sell value for good: %s (sell: %s, buy: %s)", good, am.sellValues[good], am.buyValues[good]))
             end
-          else
-            log(WARNING, string.format("failed to buy goods (illegal buy value): %s (buy: %s, sell: %s)", good, am.buyValues[good], am.sellValues[good]))
+          end        
+        end
+
+        -- buying
+        for _, good in ipairs(GOODS_DISPLAY_ORDER) do
+          local availableGold = resources[0xF] - am.goldReserve
+          if availableGold < 0 then
+            break
+          end
+          local illegalBuyValue = am.sellEnabled[good] and (am.buyValues[good] >= am.sellValues[good])
+          if am.buyEnabled[good] then
+            if illegalBuyValue == false then
+              local shortage = am.buyValues[good] - resources[good]
+              if shortage > 0 then
+                local gameCost = market.getBuyPrice(market.GameState, playerID, good, shortage)
+                local cost = gameCost
+                local credit
+                local extraGold = false
+                local playerCredit = automarketData.playerCredit[playerID].credit
+                if SETTINGS.logic.marketFee.enabled == true and SETTINGS.logic.marketFee.value > 0 and SETTINGS.logic.marketFee.value <= 100 then
+                  cost, credit = feeLogic.calculateFeedCost(gameCost, SETTINGS.logic.marketFee.value)
+                  playerCredit = playerCredit + credit
+                  if playerCredit > 100 then
+                    extraGold = true
+
+                    playerCredit = playerCredit - 100
+                  end   
+                  automarketData.playerCredit[playerID].credit = playerCredit
+                end
+
+                if availableGold > cost then
+                  local oldGold = resources[0xF]
+                  if market.buyGoods(market.AICState, playerID, good, shortage) then
+                    -- gameCost has been deducted, deduct remainder
+                    resources[0xF] = resources[0xF] - (cost - gameCost)
+                    if extraGold then
+                      resources[0xF] = resources[0xF] + 1
+                    end
+                    local newGold = resources[0xF]
+
+                    log(VERBOSE, string.format("bought goods: %s (amount: %s, cost: %s, feed cost: %s, old gold: %s, new gold: %s, credit: %s, credit payout: %s)", good, shortage, gameCost, cost, oldGold, newGold, playerCredit, extraGold))
+                  else
+                    log(WARNING, string.format("failed to buy goods: %s (amount: %s, gold: %s)", good, shortage, cost))
+                  end
+                else
+                  log(WARNING, string.format("failed to buy goods (not enough gold): %s (amount: %s, gold: %s, available: %s)", good, shortage, cost, availableGold))
+                end
+              end
+            else
+              log(WARNING, string.format("failed to buy goods (illegal buy value): %s (buy: %s, sell: %s)", good, am.buyValues[good], am.sellValues[good]))
+            end
           end
         end
       end
     end
-  end
+  end)
+  if not status then log(ERROR, string.format("error: %s", err)) end
 end)
 
 local pCallback = registerObject(ffi.cast("void (__cdecl *)()", callback))

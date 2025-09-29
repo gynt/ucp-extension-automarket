@@ -62,6 +62,17 @@ local getBuyPrice = ffi.cast([[
   )
 ]], pGetBuyPrice)
 
+local _, pGetSellPrice = utils.AOBExtract("@(E8 ? ? ? ?) 01 03 5D")
+---@type fun(gameState, playerID, resourceType, amount):integer
+local getSellPrice = ffi.cast([[
+  int (__thiscall *)(
+    void * this, // game state
+    int playerID, // unused actually
+    int resourceType,
+    int amount
+  )
+]], pGetSellPrice)
+
 local _, pUnitsState = utils.AOBExtract("8B ? I( ? ? ? ? ) B8 01 00 00 00 3B D0 7E 3A")
 local UnitsState = ffi.cast("void *", pUnitsState)
 local getAliveLordForPlayer = ffi.cast([[
@@ -80,6 +91,7 @@ return {
   pPlayerID = ffi.cast("int *", pCurrentPlayer),
   AICState = AICState,
   getBuyPrice = getBuyPrice,
+  getSellPrice = getSellPrice,
   GameState = GameState,
   marketBuildings = _pMarketBuildings,
   UnitsState = UnitsState,

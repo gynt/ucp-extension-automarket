@@ -19,7 +19,7 @@ typedef struct AutoMarketPlayerData {
 } AutoMarketPlayerData;
 
 typedef struct AutoMarketPlayerCredit {
-  int credit[25];
+  int credit;
 } AutoMarketPlayerCredit;
 
 typedef struct AutoMarketDataHeader {
@@ -37,7 +37,7 @@ typedef struct AutoMarketData {
 
   -- 260
   sizes["AutoMarketPlayerData"] = ffi.sizeof("AutoMarketPlayerData")
-  -- 100
+  -- 
   sizes["AutoMarketPlayerCredit"] = ffi.sizeof("AutoMarketPlayerCredit")
   -- 3244
   sizes["AutoMarketData"] = ffi.sizeof("AutoMarketData")
