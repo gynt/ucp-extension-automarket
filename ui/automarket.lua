@@ -1,9 +1,13 @@
 --automarket
 -- jit.off(true, true)
 
+-- debug.sethook(function() local info=debug.getinfo(2); log(VERBOSE, string.format("[%s] %s: line %s: %s", info.what, info.short_src, info.currentline, info.name)) end, "l")
+
 local core = remote.interface.core
 local utils = remote.interface.utils
+
 local market = require("ucp/modules/automarket/ui/market")
+
 
 local common = require("ucp/modules/automarket/common")
 common.loadHeaders()

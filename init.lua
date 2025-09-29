@@ -18,11 +18,11 @@ local automarketProtocolNumber = -1
 local automarketProtocolKey = ""
 
 local function getControllingPlayerID()
-  return addresses.pPlayerID[0]
+  return core.readInteger(addresses.pPlayerID)
 end
 
 local function getInvoker()
-  return addresses.pProtocolInvokerPlayerID[0]
+  return core.readInteger(addresses.pProtocolInvokerPlayerID)
 end
 
 ---@type Handler
