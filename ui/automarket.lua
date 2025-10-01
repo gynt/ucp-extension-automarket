@@ -59,6 +59,8 @@ end)
 
 local market = require("ucp/modules/automarket/ui/market")
 local feeLogic = require("ucp/modules/automarket/ui/market/fees")
+local tradeable = require("ucp/modules/automarket/ui/market/tradeable")
+local tradeability = tradeable.tradeablility
 
 local common = require("ucp/modules/automarket/common")
 common.loadHeaders()
@@ -120,10 +122,12 @@ local pLastSelectedGood = ffi.new("int[1]", {})
 
 local actionCallback1 = function(param)
   if param < 25 then
-    if pLastSelectedGood[0] == param then
-      pLastSelectedGood[0] = 0
-    else
-      pLastSelectedGood[0] = param
+    if tradeability[param] == 1 then
+      if pLastSelectedGood[0] == param then
+        pLastSelectedGood[0] = 0
+      else
+        pLastSelectedGood[0] = param
+      end
     end
   elseif param == 28 then
     log(VERBOSE, "save clicked")
@@ -273,6 +277,8 @@ local renderCallback1 = function(param)
 
   if param < 25 then
 
+    if tradeability[param] ~= 1 then return end
+
     local renderParam = param
     if param == 7 then renderParam = 8 end
 
@@ -352,15 +358,17 @@ end
 
 -- Note that menu items with parameter 2 to 24 are special...
 local function chooseFocusGood()
-  if pLastSelectedGood[0] ~= 0 then
+  if pLastSelectedGood[0] ~= 0 and tradeability[pLastSelectedGood[0]] == 1 then
     return pLastSelectedGood[0]
   elseif menu.menu ~= nil and menu.menu.hoveredItem ~= nil then
     ---@type MenuItem
     local mi = menu.menu.hoveredItem[0]
     local inferredParameter = mi.callbackParameter.parameter
     if inferredParameter > 1 and  inferredParameter < 25 then
-      local good = inferredParameter
-      return good
+      if tradeability[inferredParameter] == 1 then
+        local good = inferredParameter
+        return good
+      end
     end
   end
   return 0
@@ -1214,7 +1222,7 @@ local callback = registerObject(function()
         -- selling
         for _, good in ipairs(GOODS_DISPLAY_ORDER) do
           local illegalSellValue = am.buyEnabled[good] and (am.sellValues[good] <= am.buyValues[good])
-          if am.sellEnabled[good] then
+          if tradeability[good] == 1 and am.sellEnabled[good] then
             if illegalSellValue == false then
               local surplus = resources[good] - am.sellValues[good]
               if surplus > 0 then
@@ -1260,7 +1268,7 @@ local callback = registerObject(function()
             break
           end
           local illegalBuyValue = am.sellEnabled[good] and (am.buyValues[good] >= am.sellValues[good])
-          if am.buyEnabled[good] then
+          if tradeability[good] == 1 and am.buyEnabled[good] then
             if illegalBuyValue == false then
               local shortage = am.buyValues[good] - resources[good]
               if shortage > 0 then
