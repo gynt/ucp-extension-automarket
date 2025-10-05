@@ -382,6 +382,20 @@ local GOLD_SLIDER_MIN = 0
 local GOLD_SLIDER_MAX = 40000
 local GOLD_SLIDER_STEP = 100
 
+local function sanitizeBuySellValue(buying, selling, good, value)
+  if buying then
+    if autoMarketPlayerDataStructs[0].sellEnabled[good] and value > autoMarketPlayerDataStructs[0].sellValues[good] then
+      value = autoMarketPlayerDataStructs[0].sellValues[good]
+    end
+  elseif selling then
+    if autoMarketPlayerDataStructs[0].buyEnabled[good] and value < autoMarketPlayerDataStructs[0].buyValues[good] then
+      value = autoMarketPlayerDataStructs[0].buyValues[good]
+    end
+  end
+
+  return value
+end
+
 local sliderActionHandler = function(parameter, event, pMinValue, pMaxValue, pCurrentValue)
   ---@type ButtonRenderState
   local state = game.Rendering.ButtonState
@@ -410,26 +424,29 @@ local sliderActionHandler = function(parameter, event, pMinValue, pMaxValue, pCu
       -- 2 means shift thumb by clicking next to it
       -- 3 means dragging the thumb
       pEnabled[good] = true
-      pValues[good] = pCurrentValue[0]
+      pValues[good] = sanitizeBuySellValue(buying, selling, good, pCurrentValue[0])
     elseif event == 4 then
       -- Some kind of "pre", called on almost every render... (I mean callback)
       pMinValue[0] = GOODS_SLIDER_MIN
       pMaxValue[0] = GOODS_SLIDER_MAX
       pCurrentValue[0] = pValues[good]
-    elseif (not SETTINGS.ui.buySellSliders.scrollWheel.invert and event == 5) or(SETTINGS.ui.buySellSliders.scrollWheel.invert and event == 6) then
+    elseif (not SETTINGS.ui.buySellSliders.scrollWheel.invert and event == 5) or (SETTINGS.ui.buySellSliders.scrollWheel.invert and event == 6) then
       -- scroll up
       if good == 0 then return end
       local isInside = game.Input.isMouseInsideBox(game.Input.mouseState, state.x, state.y, state.width, state.height)
 
       if isInside ~= 0 then      
-        if tonumber(pValues[good]) > tonumber(pMinValue[0]) then
+        if (tonumber(pValues[good]) > tonumber(pMinValue[0])) then
           pEnabled[good] = true
-          pCurrentValue[0] = pCurrentValue[0] - 1
-          pValues[good] = pValues[good] - 1
+
+          local newValue = sanitizeBuySellValue(buying, selling, good, pCurrentValue[0] - 1)
+
+          pCurrentValue[0] = newValue
+          pValues[good] = newValue
         end
       end
       
-    elseif (not SETTINGS.ui.buySellSliders.scrollWheel.invert and event == 6) or(SETTINGS.ui.buySellSliders.scrollWheel.invert and event == 5) then
+    elseif (not SETTINGS.ui.buySellSliders.scrollWheel.invert and event == 6) or (SETTINGS.ui.buySellSliders.scrollWheel.invert and event == 5) then
       -- scroll down
 
       if good == 0 then return end
@@ -438,8 +455,11 @@ local sliderActionHandler = function(parameter, event, pMinValue, pMaxValue, pCu
       if isInside ~= 0 then      
         if tonumber(pValues[good]) < tonumber(pMaxValue[0]) then
           pEnabled[good] = true
-          pCurrentValue[0] = pCurrentValue[0] + 1
-          pValues[good] = pValues[good] + 1
+
+          local newValue = sanitizeBuySellValue(buying, selling, good, pCurrentValue[0] + 1)
+
+          pCurrentValue[0] = newValue
+          pValues[good] = newValue
         end
       end
     elseif event == 7 then
@@ -1221,7 +1241,7 @@ local callback = registerObject(function()
       if isLordAlive and hasMarket and am.enabled then
         -- selling
         for _, good in ipairs(GOODS_DISPLAY_ORDER) do
-          local illegalSellValue = am.buyEnabled[good] and (am.sellValues[good] <= am.buyValues[good])
+          local illegalSellValue = am.buyEnabled[good] and (am.sellValues[good] < am.buyValues[good])
           if tradeability[good] == 1 and am.sellEnabled[good] then
             if illegalSellValue == false then
               local surplus = resources[good] - am.sellValues[good]
@@ -1267,7 +1287,7 @@ local callback = registerObject(function()
           if availableGold < 0 then
             break
           end
-          local illegalBuyValue = am.sellEnabled[good] and (am.buyValues[good] >= am.sellValues[good])
+          local illegalBuyValue = am.sellEnabled[good] and (am.buyValues[good] > am.sellValues[good])
           if tradeability[good] == 1 and am.buyEnabled[good] then
             if illegalBuyValue == false then
               local shortage = am.buyValues[good] - resources[good]
