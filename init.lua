@@ -103,7 +103,7 @@ function automarket:enable(config)
       if pAutomarketPlayerSettings == nil then error("pAutomarketPlayerSettings is nil!") end
     end,
     commitData = function()
-      log(WARNING, "do the commit!")
+      log(DEBUG, "do the commit!")
       p:invokeProtocol(automarketProtocolNumber)
     end,
     allocateMarketProcess = function(pointer)
@@ -192,7 +192,7 @@ function automarket:enable(config)
         else
           local expectedVersion = automarketData.header.version
           local receivedVersion = string.unpack("<i", data:sub(1, 4))
-          log(WARNING, string.format("expected version %d and received version %s", automarketData.header.version, receivedVersion))
+          log(INFO, string.format("expected version %d and received version %s", automarketData.header.version, receivedVersion))
 
           if expectedVersion == receivedVersion then
             success = true

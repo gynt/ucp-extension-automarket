@@ -1,6 +1,18 @@
 local core = remote.interface.core
 local utils = remote.interface.utils
 
+local trigger = {}
+
+local pAutomarketData
+function trigger.setAutomarketDataPointer(automarketDataPointer)
+  pAutomarketData = automarketDataPointer
+end
+
+local pPlayerID
+function trigger.setControllingPlayerPoint(playerIDPointer)
+  pPlayerID = playerIDPointer
+end
+
 local render = ffi.cast("void (__cdecl *)(int)", function(parameter)
   ---@type ButtonRenderState
   local state = game.Rendering.ButtonState
@@ -14,7 +26,8 @@ end)
 registerObject(render)
 
 local action = ffi.cast("void (__cdecl *)(int)", function(parameter)
-  log(VERBOSE, "trigger automarket window")
+  log(VERBOSE, string.format("trigger automarket window for player: %s", pPlayerID[0]))
+  pAutomarketData[0].playerSettings[0] = pAutomarketData[0].playerSettings[pPlayerID[0]]
   game.UI.activateModalMenu(game.UI.MenuModalComposition1, 2025, false)
 end)
 registerObject(action)
@@ -60,5 +73,5 @@ local item2 =  {
   },
 }
 registerObject(item2)
-
-return item
+trigger.triggerItem = item
+return trigger

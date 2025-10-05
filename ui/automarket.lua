@@ -451,7 +451,7 @@ local sliderActionHandler = function(parameter, event, pMinValue, pMaxValue, pCu
         pCurrentStep[0] = GOODS_SLIDER_STEP
       end
     else
-      log(WARNING, string.format("%d, %d, %d, %d, %d", parameter, event, pMinValue[0], pMaxValue[0], pCurrentValue[0]))
+      log(VERBOSE, string.format("%d, %d, %d, %d, %d", parameter, event, pMinValue[0], pMaxValue[0], pCurrentValue[0]))
     end
 
     return
@@ -499,7 +499,7 @@ local sliderActionHandler = function(parameter, event, pMinValue, pMaxValue, pCu
       local pCurrentStep = pCurrentValue
       pCurrentStep[0] = GOLD_SLIDER_STEP
     else
-      log(WARNING, string.format("%d, %d, %d, %d, %d", parameter, event, pMinValue[0], pMaxValue[0], pCurrentValue[0]))
+      log(VERBOSE, string.format("%d, %d, %d, %d, %d", parameter, event, pMinValue[0], pMaxValue[0], pCurrentValue[0]))
     end
 
     return
@@ -1319,10 +1319,13 @@ end)
 
 local pCallback = registerObject(ffi.cast("void (__cdecl *)()", callback))
 
-local triggerItem = require("ucp/modules/automarket/ui/trigger")
+local trigger = require("ucp/modules/automarket/ui/trigger")
+
+trigger.setAutomarketDataPointer(automarketDataArray)
+trigger.setControllingPlayerPoint(market.pPlayerID)
 
 return {
   pAutoMarketData = pAutoMarketData,
   pCallback = tonumber(ffi.cast("unsigned long", pCallback)),
-  triggerItem = triggerItem,
+  triggerItem = trigger.triggerItem,
 }
