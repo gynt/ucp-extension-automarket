@@ -16,7 +16,6 @@ options:
     header: "Market Fee percentage"
     text: "If not zero, buy expenses go up by this percentage and sale income goes down with this percentage for goods traded with the Automarket."
     hasHeader: true
-    enabled: false
     display: UCP2Slider
     category:
       - Automarket
