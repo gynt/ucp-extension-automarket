@@ -1,21 +1,23 @@
-# Stronghold Crusader Automarket (UCP3)
-This repository contains the source code for the Automarket extension.
-
-The extension works with the [Unofficial Crusader Patch 3 framework](https://github.com/UnofficialCrusaderPatch/UnofficialCrusaderPatch), more information can be found [here](https://unofficialcrusaderpatch.github.io/).
+# Automarket
+This extension provides an automarket
 
 ## Features
 - Integrated UI: the UI is integrated into the game.
+![ui integration](https://raw.githubusercontent.com/gynt/ucp-extension-automarket/refs/heads/main/locale/ui-automarket-button.png)
 - Works in Multiplayer: everyone needs to have the automarket extension activated.
 
-## Upcoming features
-- Market fee: buys and sales are more expensive and have less profit according to a preset percentage as set in the UCP3 GUI.
-- Customisations: customisations can be added based on popular demand. 
+## Troubleshooting & Known issues
+Currently there is a stability issue which makes the game exe crash randomly after the game has loaded (or later).
+There is an option in the Customisations tab to hopefully prevent the crash (if this was the cause).
 
-## Known issues
-Currently there is a stability issue which makes the game exe crash when the load bar is full.
-I am investigating the issue, it has probably to do with a bug in the `cffi` library.
+It is called: *Disable Just-in-Time (LuaJIT) which would degrade performance*
+Mark the checkbox to prevent the crash.
 
-## Usage
+![stability setting](https://raw.githubusercontent.com/gynt/ucp-extension-automarket/refs/heads/main/locale/stability-debugging-setting.png)
+
+Is your game still crashing? Please report!
+
+## How it works
 A button has been added to the Market interface. Upon clicking it, a modal menu will open listing all goods, its stock, and the settings of the automarket.
 
 Every in-game week, the automarket will sell and buy goods (in that order). To configure a goods type, click on it, and then adjust the sliders. When finished, click the checkmark icon to commit your new settings.
