@@ -18,7 +18,8 @@ local render = ffi.cast("void (__cdecl *)(int)", function(parameter)
   local state = game.Rendering.ButtonState
   -- game.Rendering.renderButtonBackground(game.Rendering.alphaAndButtonSurface, 0, -1)
   game.Rendering.pDrawBufferChoiceValue[0] = 0
-  game.Rendering.renderTextToScreenConst(game.Rendering.textManager, "Auto market", state.x - 14, state.y + 30, 0, 0xB8EEFB, 0x12, 0, 0)
+  local color = 0 -- 0xB8EEFB
+  game.Rendering.renderTextToScreenConst(game.Rendering.textManager, "Auto market", state.x - 14, state.y + 30, 0, color, 0x12, 0, 0)
   game.Rendering.renderGM(game.Rendering.textureRenderCore, 0x2E, 204, state.x, state.y)
   state.gmPictureIndex = 204
   game.Rendering.pDrawBufferChoiceValue[0] = 1
@@ -74,4 +75,35 @@ local item2 =  {
 }
 registerObject(item2)
 trigger.triggerItem = item
+
+local _, pMenuHandlerStateXY = utils.AOBExtract("A1 I(? ? ? ?) 53 55 56 57 33 FF 57 57 6A 10 57 8D 91 00 02 00 00")
+ffi.cdef([[
+  struct AM_Temp_Position {
+    int x;
+    int y;
+  };
+]])
+local menuHandlerStateXY = ffi.cast("struct AM_Temp_Position *", pMenuHandlerStateXY)
+local _, pLeftClickStart = utils.AOBExtract("83 ? I(? ? ? ?) ? 0F ? ? ? ? ? 8B ? ? ? ? ? 8B ? ? ? ? ? 8D 44 0A FF")
+pLeftClickStart = ffi.cast("int *", pLeftClickStart)
+
+local stockpileRenderActionHandlerCombined = ffi.cast("void (__cdecl *)(void)", function()
+  local x = menuHandlerStateXY.x + 465
+  local y = menuHandlerStateXY.y + 461
+
+  game.Rendering.pDrawBufferChoiceValue[0] = 0
+  local color = 0 -- 0xB8EEFB
+  game.Rendering.renderTextToScreenConst(game.Rendering.textManager, "Auto market", x - 14, y + 30, 0, color, 0x12, 0, 0)
+  game.Rendering.renderGM(game.Rendering.textureRenderCore, 0x2E, 204, x, y)
+  game.Rendering.pDrawBufferChoiceValue[0] = 1
+
+  if pLeftClickStart[0] == 1 then
+    if game.Input.isMouseInsideBox(game.Input.mouseState, x, y, 50, 30) == 1 then
+      action(0)
+    end
+  end
+end)
+registerObject(stockpileRenderActionHandlerCombined)
+trigger.renderAndHandleInOne = tonumber(ffi.cast("unsigned long", stockpileRenderActionHandlerCombined))
+
 return trigger

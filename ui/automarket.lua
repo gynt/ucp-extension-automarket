@@ -495,7 +495,7 @@ local sliderActionHandler = function(parameter, event, pMinValue, pMaxValue, pCu
       pMaxValue[0] = GOLD_SLIDER_MAX
       pCurrentValue[0] = autoMarketPlayerDataStructs[0].goldReserve
 
-    elseif event == 5 then
+    elseif (not SETTINGS.ui.buySellSliders.scrollWheel.invert and event == 5) or (SETTINGS.ui.buySellSliders.scrollWheel.invert and event == 6) then
       -- scroll up
       local isInside = game.Input.isMouseInsideBox(game.Input.mouseState, state.x, state.y, state.width, state.height)
       if isInside ~= 0 then      
@@ -505,7 +505,7 @@ local sliderActionHandler = function(parameter, event, pMinValue, pMaxValue, pCu
         end
       end
       
-    elseif event == 6 then
+    elseif (not SETTINGS.ui.buySellSliders.scrollWheel.invert and event == 6) or (SETTINGS.ui.buySellSliders.scrollWheel.invert and event == 5) then
       -- scroll down
       local isInside = game.Input.isMouseInsideBox(game.Input.mouseState, state.x, state.y, state.width, state.height)
       if isInside ~= 0 then      
@@ -969,16 +969,21 @@ local menuItems = {
     },
     menuItemRenderFunction = {
       simple = ffi.cast("void (__cdecl *)(int)", function(parameter)
-        ---@type ButtonRenderState
-        local state = game.Rendering.ButtonState
-        state.interacting = state.interacting or autoMarketPlayerDataStructs[0].enabled
-        game.Rendering.renderButtonBackground(game.Rendering.alphaAndButtonSurface, 0, -1)
+        local status, err = pcall(function() 
+                ---@type ButtonRenderState
+          local state = game.Rendering.ButtonState
+          state.interacting = state.interacting or autoMarketPlayerDataStructs[0].enabled
+          game.Rendering.renderButtonBackground(game.Rendering.alphaAndButtonSurface, 0, -1)
 
-        local txt = "Off"
-        if autoMarketPlayerDataStructs[0].enabled then
-          txt = "On"
-        end
-        game.Rendering.renderTextToScreenConst(game.Rendering.textManager, txt, state.x + 6 + 4, state.y + 6, 0, 0xB8EEFB, 0x12, 0, 0)
+          local color = 0x0000FF
+          local txt = "Off"
+          if autoMarketPlayerDataStructs[0].enabled then
+            txt = "On"
+            color = 0x00FF00
+          end
+          game.Rendering.renderTextToScreenConst(game.Rendering.textManager, txt, state.x + 6 + 4, state.y + 6, 0, color, 0x12, 0, 0)
+        end)
+        if not status then log(ERROR, err) end
       end),
     },
     menuItemActionHandler = {
@@ -998,7 +1003,7 @@ local menuItems = {
     menuItemRenderFunctionType = 0x1,
     position = {
       position = {
-        x = 600 - 50 - 15 - 25 - 256 - 5 - 140 - 50 + 25,
+        x = -50 + 600 - 50 - 15 - 25 - 256 - 5 - 140 - 50 + 25,
         y = SLIDER_ROW_Y,
       }
     },
@@ -1053,7 +1058,7 @@ local menuItems = {
     menuItemRenderFunctionType = 0x4, -- Slider
     position = {
       position = {
-        x = 600 - 50 - 25 - 15 - 256 - 10 + 25,
+        x = -50 + 600 - 50 - 25 - 15 - 256 - 10 + 25,
         y = SLIDER_ROW_Y,
       }
     },
@@ -1077,7 +1082,7 @@ local menuItems = {
     menuItemRenderFunctionType = 0x1,
     position = {
       position = {
-        x = 600 - 50 - 15,
+        x = -50 + 600 - 50 - 15,
         y = SLIDER_ROW_Y,
       }
     },
@@ -1112,7 +1117,7 @@ local menuItems = {
     menuItemRenderFunctionType = 0x4, -- Slider
     position = {
       position = {
-        x = 600 - 50 - 25 - 15 - 256 - 10 + 25,
+        x = -50 + 600 - 50 - 25 - 15 - 256 - 10 + 25,
         y = SLIDER_ROW_Y + 30 + 5,
       }
     },
@@ -1136,7 +1141,7 @@ local menuItems = {
     menuItemRenderFunctionType = 0x1,
     position = {
       position = {
-        x = 600 - 50 - 15,
+        x = -50 + 600 - 50 - 15,
         y = SLIDER_ROW_Y + 30 + 5,
       }
     },
@@ -1222,7 +1227,7 @@ ModalMenu:createModalMenu({
         feeTxt = string.format("Market fee:   %d", SETTINGS.logic.marketFee.value) .. " %"
       end
       
-      game.Rendering.renderTextToScreenConst(textManager, feeTxt, x + 30, y + height - 45 + 5 + 3, 0, 0xB8EEFB, 0x13, 0, 0)
+      game.Rendering.renderTextToScreenConst(textManager, feeTxt, x + 30 + 5, y + height - 45 + 5 + 3, 0, 0xB8EEFB, 0x13, 0, 0)
     end)
     if status == false then log(ERROR, err) end
     
@@ -1348,4 +1353,5 @@ return {
   pAutoMarketData = pAutoMarketData,
   pCallback = tonumber(ffi.cast("unsigned long", pCallback)),
   triggerItem = trigger.triggerItem,
+  renderAndHandleInOne = trigger.renderAndHandleInOne,
 }

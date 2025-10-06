@@ -144,10 +144,46 @@ function automarket:enable(config)
     -- menu:reallocateMenuItems()
     -- TODO: fails:
     log(VERBOSE, string.format('inserting trigger button in market panel: %s', automarketUI.automarket.triggerItem))
-    menu:insertMenuItem(144, automarketUI.automarket.triggerItem)
-    log(VERBOSE, 'updating items to skip')
-    -- Since we do this post initialization of the menu, we have to adjust the tab panel items to skip value
-    menu.menuItems[138].firstItemTypeData.itemsToSkip = menu.menuItems[138].firstItemTypeData.itemsToSkip + 1
+    local insertionPoints = {
+      {
+        tab = 138,
+        location = 144,
+      },
+      {
+        tab = 144,
+        location = 147,
+      },
+      {
+        tab = 147,
+        location = 150,
+      },
+      {
+        tab =  159,
+        location =  162,
+      },
+      {
+        tab = 171,
+        location = 174,
+      },
+    }
+    for i=#insertionPoints,1,-1 do
+      local insertionPoint = insertionPoints[i]
+      log(VERBOSE, string.format("inserting trigger item into tab: 0x%X", insertionPoint.tab))
+      menu:insertMenuItem(insertionPoint.location, automarketUI.automarket.triggerItem)
+      menu.menuItems[insertionPoint.tab].firstItemTypeData.itemsToSkip = menu.menuItems[insertionPoint.tab].firstItemTypeData.itemsToSkip + 1
+    end
+    
+
+
+    -- TODO: write the trigger item callback logic
+    local hookLocation, hookSize = core.AOBScan("51 8B ? ? ? ? ? A1 ? ? ? ? 53 55 56 57 33 FF 57 57 6A 10 57 8D 91 00 02 00 00"), 7
+    core.insertCode(hookLocation, hookSize, {
+      core.AssemblyLambda([[
+        call f
+      ]], {
+        f = automarketUI.automarket.renderAndHandleInOne
+      })
+    }, nil, "after")
   end)
 
   local mapdatapath = "automarketplayerdata.bin"
