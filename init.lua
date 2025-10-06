@@ -165,6 +165,10 @@ function automarket:enable(config)
         tab = 171,
         location = 174,
       },
+      {
+        tab = 179,
+        location = 182,
+      },
     }
     for i=#insertionPoints,1,-1 do
       local insertionPoint = insertionPoints[i]
@@ -176,8 +180,17 @@ function automarket:enable(config)
 
 
     -- TODO: write the trigger item callback logic
-    local hookLocation, hookSize = core.AOBScan("51 8B ? ? ? ? ? A1 ? ? ? ? 53 55 56 57 33 FF 57 57 6A 10 57 8D 91 00 02 00 00"), 7
-    core.insertCode(hookLocation, hookSize, {
+    local hookLocationStockpile, hookSizeStockpile = core.AOBScan("51 8B ? ? ? ? ? A1 ? ? ? ? 53 55 56 57 33 FF 57 57 6A 10 57 8D 91 00 02 00 00"), 7
+    core.insertCode(hookLocationStockpile, hookSizeStockpile, {
+      core.AssemblyLambda([[
+        call f
+      ]], {
+        f = automarketUI.automarket.renderAndHandleInOne
+      })
+    }, nil, "after")
+
+    local hookLocationArmory, hookSizeArmory = core.AOBScan("51 8B ? ? ? ? ? A1 ? ? ? ? 53 55 56 57 33 FF 57 57 6A 10 57 57"), 7
+    core.insertCode(hookLocationArmory, hookSizeArmory, {
       core.AssemblyLambda([[
         call f
       ]], {
