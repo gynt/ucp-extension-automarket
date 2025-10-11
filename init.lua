@@ -197,6 +197,30 @@ function automarket:enable(config)
         f = automarketUI.automarket.renderAndHandleInOne
       })
     }, nil, "after")
+
+    local rawPEnabledArray = core.allocate(4 * 9, true)
+    local pEnabledArray = ffi.cast("bool **", rawPEnabledArray)
+    local s = pAutomarketData + common.sizes["AutoMarketDataHeader"]
+    for i=0,8 do
+      pEnabledArray[i] = ffi.cast("bool *", s)
+      s = s + common.sizes["AutoMarketPlayerData"]
+    end
+
+    --- improved visuals of the marketplace
+    local p = core.AOBScan("83 ? ? ? ? ? ? 66 ? ? ? ? ? ? BF 01 00 00 00")
+    local _, ownerOffset = utils.AOBExtract("0F ? ? I(? ? ? ?) 8B 5C 24 34 8B ? ? ? ? ? ?")
+    core.insertCode(p, 7, {
+      core.AssemblyLambda([[
+        mov ECX, ESI
+        add ECX, ownerOffset
+        movzx ecx, word [ecx]
+        mov ecx, dword [pEnabledArray + 4*ECX]
+        cmp byte [ecx], 1
+      ]], {
+        pEnabledArray = ffi.tonumber(ffi.cast("unsigned long", pEnabledArray)),
+        ownerOffset = ownerOffset,
+      })
+    }, nil, "before")
   end)
 
   local mapdatapath = "automarketplayerdata.bin"
